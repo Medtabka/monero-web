@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Monero Web — Wallet Dashboard</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='128' cy='128' r='128' fill='%23ff6600'/%3E%3Cpath d='M63.5 178.2V105.7l64.5 64.5 64.5-64.5v72.5h29.8v-99.9c0-6.7-5.4-12.1-12.1-12.1-3.2 0-6.3 1.3-8.6 3.5L128 143.3 54.4 69.7c-2.3-2.3-5.3-3.5-8.6-3.5-6.7 0-12.1 5.4-12.1 12.1v99.9h29.8z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+:root {
+  --bg:#0a0a0a; --surface:#111113; --surface-2:#19191d; --border:rgba(255,255,255,0.06);
+  --border-focus:rgba(255,130,47,0.4); --text:#eae8e4; --text-dim:#6e6c6a; --text-mid:#9a9894;
+  --xmr:#ff6600; --xmr-dim:rgba(255,102,0,0.12); --xmr-glow:rgba(255,102,0,0.2);
+  --success:#22c55e; --danger:#ef4444; --warning:#f59e0b; --radius-sm:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;-webkit-font-smoothing:antialiased}
+body{min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden}
+.page{position:relative;z-index:2;flex:1;display:flex;flex-direction:column}
+.container{width:100%;max-width:500px;margin:0 auto;padding:0 20px}
+
+nav{padding:16px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:28px;height:28px}
+.logo-text{font-size:1rem;font-weight:600;letter-spacing:-0.02em}
+.logo-text span{color:var(--xmr)}
+.nav-links{display:flex;gap:4px}
+.nav-links a{color:var(--text-dim);text-decoration:none;font-size:.75rem;font-weight:500;padding:6px 12px;border-radius:100px;transition:all .25s}
+.nav-links a:hover{color:var(--text);background:var(--surface-2)}
+.nav-links a.active{color:var(--xmr)}
+
+/* Connection bar */
+.conn-bar{display:flex;align-items:center;gap:8px;padding:10px 0;font-size:.72rem;color:var(--text-dim)}
+.conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.conn-dot.connected{background:var(--success);box-shadow:0 0 6px rgba(34,197,94,0.4)}
+.conn-dot.connecting{background:var(--warning);animation:blink 1s infinite}
+.conn-dot.disconnected{background:var(--danger)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.conn-info{flex:1}
+.conn-height{font-family:'JetBrains Mono',monospace;color:var(--text-mid)}
+
+/* Wallet header */
+.wallet-header{padding:24px 0 16px;text-align:center}
+.wallet-address{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text-dim);word-break:break-all;line-height:1.5;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:16px;user-select:all;cursor:pointer;position:relative}
+.wallet-address:hover{border-color:rgba(255,255,255,0.12)}
+.wallet-address .copy-toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--xmr);color:#fff;font-family:'Outfit',sans-serif;font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:100px;opacity:0;transition:opacity .2s}
+.wallet-address .copy-toast.show{opacity:1}
+
+.balance-section{text-align:center;margin-bottom:24px}
+.balance-label{font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.balance-value{font-size:2rem;font-weight:700;letter-spacing:-0.03em;color:var(--text)}
+.balance-value .xmr-symbol{color:var(--xmr);font-size:1rem;font-weight:500;margin-left:6px}
+.balance-note{font-size:.7rem;color:var(--text-dim);margin-top:4px}
+
+/* Action buttons */
+.actions{display:flex;gap:10px;margin-bottom:24px}
+.action-btn{flex:1;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px}
+.action-btn:hover{background:var(--surface-2);border-color:rgba(255,255,255,0.12)}
+.action-btn.primary{background:var(--xmr);border-color:var(--xmr);color:#fff;box-shadow:0 4px 16px var(--xmr-glow)}
+.action-btn.primary:hover{background:#e85d00}
+.action-btn svg{width:18px;height:18px}
+
+/* Info cards */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px}
+.info-card .info-label{font-size:.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.info-card .info-value{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--text);font-weight:500}
+
+/* Network status */
+.network-section{margin-bottom:24px}
+.section-title{font-size:.78rem;font-weight:600;color:var(--text-mid);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em}
+.network-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px}
+.network-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.78rem}
+.network-row:not(:last-child){border-bottom:1px solid var(--border)}
+.network-row .label{color:var(--text-dim)}
+.network-row .value{font-family:'JetBrains Mono',monospace;color:var(--text)}
+
+/* Keys section */
+.keys-section{margin-bottom:24px}
+.key-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .25s}
+.key-card:hover{border-color:rgba(255,255,255,0.12)}
+.key-card .key-label{font-size:.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.key-card .key-value{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-mid);word-break:break-all;line-height:1.5}
+.key-card .key-value.hidden{filter:blur(6px);user-select:none}
+.key-toggle{font-size:.65rem;color:var(--xmr);cursor:pointer;font-family:'Outfit',sans-serif}
+
+/* Disconnect */
+.disconnect-btn{width:100%;padding:12px;background:none;border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);color:#f87171;font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .25s;margin-bottom:24px}
+.disconnect-btn:hover{background:rgba(239,68,68,0.06);border-color:rgba(239,68,68,0.3)}
+
+footer{padding:16px 0;text-align:center;border-top:1px solid var(--border)}
+footer p{font-size:.65rem;color:var(--text-dim)}
+
+/* Loading state */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 0;gap:16px}
+.loading .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--xmr);border-radius:50%;animation:spin 1s linear infinite}
+.loading p{font-size:.85rem;color:var(--text-dim)}
+
+/* ─── Modals ─── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg);border:1px solid var(--border);border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;animation:fadeIn .25s ease-out}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
+.modal-header h2{font-size:1rem;font-weight:600}
+.modal-close{background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .2s}
+.modal-close:hover{color:var(--text);background:var(--surface-2)}
+.modal-body{padding:20px}
+
+.receive-address{font-family:'JetBrains Mono',monospace;font-size:.62rem;word-break:break-all;line-height:1.6;color:var(--text-mid);padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:12px;user-select:all;text-align:left}
+.btn-outline{width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .25s}
+.btn-outline:hover{background:var(--surface-2);border-color:rgba(255,255,255,0.12)}
+.receive-warning{display:flex;align-items:center;gap:6px;margin-top:14px;font-size:.7rem;color:var(--warning);justify-content:center}
+
+.send-coming-soon{text-align:center;padding:8px 0}
+.send-coming-soon svg{margin-bottom:12px;opacity:.6}
+.send-coming-soon h3{font-size:1.1rem;font-weight:600;margin-bottom:8px}
+.send-coming-soon p{font-size:.78rem;color:var(--text-dim);line-height:1.6;margin-bottom:8px}
+.send-options{text-align:left;margin:12px 0}
+.send-option{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
+.send-option strong{display:block;font-size:.78rem;color:var(--text);margin-bottom:2px}
+.send-option span{font-size:.72rem;color:var(--text-dim);line-height:1.5}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .4s ease-out}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="container">
+    <nav>
+      <div class="logo">
+        <svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="128" fill="#ff6600"/><path d="M63.5 178.2V105.7l64.5 64.5 64.5-64.5v72.5h29.8v-99.9c0-6.7-5.4-12.1-12.1-12.1-3.2 0-6.3 1.3-8.6 3.5L128 143.3 54.4 69.7c-2.3-2.3-5.3-3.5-8.6-3.5-6.7 0-12.1 5.4-12.1 12.1v99.9h29.8z" fill="#fff"/></svg>
+        <div class="logo-text">monero<span>web</span></div>
+      </div>
+      <div class="nav-links">
+        <a href="/" class="active">Wallet</a>
+        <a href="/verify.html">Verify</a>
+      </div>
+    </nav>
+
+    <!-- Connection bar -->
+    <div class="conn-bar">
+      <div class="conn-dot connecting" id="conn-dot"></div>
+      <div class="conn-info" id="conn-info">Connecting to network...</div>
+    </div>
+
+    <!-- Loading state -->
+    <div class="loading" id="loading-state">
+      <div class="spinner"></div>
+      <p>Connecting to Monero network...</p>
+    </div>
+
+    <!-- Dashboard (hidden until connected) -->
+    <div id="dashboard" style="display:none">
+
+      <!-- Address -->
+      <div class="wallet-header fade-in">
+        <div class="wallet-address" id="wallet-address" title="Click to copy">
+          <span class="copy-toast" id="addr-toast">Copied!</span>
+        </div>
+      </div>
+
+      <!-- Balance -->
+      <div class="balance-section fade-in">
+        <div class="balance-label">Balance</div>
+        <div class="balance-value">
+          <span id="balance-xmr">—</span>
+          <span class="xmr-symbol">XMR</span>
+        </div>
+        <div class="balance-note" id="balance-note">Scanning blockchain...</div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="actions fade-in">
+        <button class="action-btn primary" id="btn-send">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+          Send
+        </button>
+        <button class="action-btn" id="btn-receive">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Receive
+        </button>
+      </div>
+
+      <!-- Network Info -->
+      <div class="network-section fade-in">
+        <div class="section-title">Network</div>
+        <div class="network-card">
+          <div class="network-row">
+            <span class="label">Node</span>
+            <span class="value" id="net-node">—</span>
+          </div>
+          <div class="network-row">
+            <span class="label">Height</span>
+            <span class="value" id="net-height">—</span>
+          </div>
+          <div class="network-row">
+            <span class="label">Latency</span>
+            <span class="value" id="net-latency">—</span>
+          </div>
+          <div class="network-row">
+            <span class="label">Est. Fee</span>
+            <span class="value" id="net-fee">—</span>
+          </div>
+          <div class="network-row">
+            <span class="label">Tx Pool</span>
+            <span class="value" id="net-pool">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wallet Keys (hidden by default) -->
+      <div class="keys-section fade-in">
+        <div class="section-title">Wallet Keys</div>
+        <div class="key-card" id="card-spend">
+          <div class="key-label">Private Spend Key <span class="key-toggle" id="toggle-spend">Show</span></div>
+          <div class="key-value hidden" id="key-spend"></div>
+        </div>
+        <div class="key-card" id="card-view">
+          <div class="key-label">Private View Key <span class="key-toggle" id="toggle-view">Show</span></div>
+          <div class="key-value hidden" id="key-view"></div>
+        </div>
+        <div class="key-card">
+          <div class="key-label">Public Spend Key</div>
+          <div class="key-value" id="key-pub-spend" style="font-size:.65rem"></div>
+        </div>
+        <div class="key-card">
+          <div class="key-label">Public View Key</div>
+          <div class="key-value" id="key-pub-view" style="font-size:.65rem"></div>
+        </div>
+      </div>
+
+      <!-- Subaddresses -->
+      <div class="keys-section fade-in">
+        <div class="section-title">Subaddresses</div>
+        <div class="key-card">
+          <div class="key-label" style="margin-bottom:8px">Generate a subaddress (account / index)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:10px">
+            <input id="sub-major" type="number" min="0" value="0" placeholder="account" style="min-width:0;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem;outline:none">
+            <input id="sub-minor" type="number" min="1" value="1" placeholder="index" style="min-width:0;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem;outline:none">
+            <button id="btn-sub-gen" class="action-btn" style="flex:0 0 auto;padding:8px 14px;font-size:.78rem;white-space:nowrap">Generate</button>
+          </div>
+          <div id="sub-error" style="display:none;color:#f87171;font-size:.72rem;margin-top:6px"></div>
+          <div id="sub-list"></div>
+        </div>
+      </div>
+
+      <!-- Custom node + export -->
+      <div class="keys-section fade-in">
+        <div class="section-title">Settings</div>
+        <div class="key-card">
+          <div class="key-label" style="margin-bottom:6px">Custom node URL <span style="color:var(--text-dim)">· optional, must use HTTPS &amp; CORS</span></div>
+          <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px">
+            <input id="custom-node" type="text" placeholder="https://my-node.example:18089" style="min-width:0;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.75rem;outline:none">
+            <button id="btn-node-save" class="action-btn" style="padding:8px 14px;font-size:.78rem;white-space:nowrap">Save</button>
+            <button id="btn-node-clear" class="action-btn" style="padding:8px 14px;font-size:.78rem;white-space:nowrap">Reset</button>
+          </div>
+          <div id="node-msg" style="font-size:.7rem;color:var(--text-dim);margin-top:6px"></div>
+        </div>
+        <div class="key-card" style="margin-top:8px">
+          <div class="key-label" style="margin-bottom:8px">Export wallet</div>
+          <button id="btn-export" class="action-btn" style="width:100%;padding:10px;font-size:.78rem">Download JSON backup</button>
+          <div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;line-height:1.5">Contains your address and keys in a portable JSON file. Treat it like your seed phrase — anyone with this file can spend your funds.</div>
+        </div>
+      </div>
+
+      <!-- Disconnect -->
+      <button class="disconnect-btn" id="btn-disconnect">Disconnect Wallet</button>
+    </div>
+  </div>
+
+  <!-- ═══ RECEIVE MODAL ═══ -->
+  <div class="modal-overlay" id="receive-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Receive XMR</h2>
+        <button class="modal-close" id="receive-close">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center">
+        <div id="qr-code" style="margin:16px auto;width:220px;height:220px;background:var(--surface-2);border-radius:12px;display:flex;align-items:center;justify-content:center">
+          <div class="spinner" style="width:24px;height:24px"></div>
+        </div>
+        <p style="font-size:.7rem;color:var(--text-dim);margin-bottom:12px">Scan this QR code or copy the address below</p>
+        <div class="receive-address" id="receive-addr"></div>
+        <button class="btn-outline" id="receive-copy">Copy Address</button>
+        <div class="receive-warning">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Only send Monero (XMR) to this address
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SEND MODAL ═══ -->
+  <div class="modal-overlay" id="send-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Send XMR</h2>
+        <button class="modal-close" id="send-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="send-coming-soon">
+          <svg width="48" height="48" fill="none" stroke="var(--xmr)" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <h3>Send coming soon</h3>
+          <p>Sending XMR requires scanning your wallet's outputs on the blockchain to find spendable coins, then constructing a ring signature transaction client-side.</p>
+          <p>This needs either:</p>
+          <div class="send-options">
+            <div class="send-option">
+              <strong>Option A: Light wallet server</strong>
+              <span>A server scans the blockchain using your view key and returns your outputs. Your spend key stays local.</span>
+            </div>
+            <div class="send-option">
+              <strong>Option B: Client-side WASM</strong>
+              <span>Full blockchain scanning in the browser using WebAssembly. Slow (~5-30 min first sync) but fully trustless.</span>
+            </div>
+          </div>
+          <p style="color:var(--xmr);font-weight:500;margin-top:8px">We're building Option A first. Stay tuned.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>monero-web.com — Open source · MIT License · Your keys never leave your browser</p>
+    </div>
+  </footer>
+</div>
+
+<!-- ═══ UNLOCK OVERLAY (encrypted vault / idle auto-lock) ═══ -->
+<div id="unlock-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,10,10,0.92);backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;padding:24px">
+  <div style="width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <svg width="22" height="22" fill="none" stroke="var(--xmr)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <h2 style="font-size:1.05rem;font-weight:600;letter-spacing:-0.01em">Wallet locked</h2>
+    </div>
+    <p id="unlock-msg" style="color:var(--text-dim);font-size:.78rem;line-height:1.5;margin-bottom:16px">Enter your session password to unlock this tab.</p>
+    <input id="unlock-pw" type="password" autocomplete="current-password" placeholder="Session password" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none;margin-bottom:10px">
+    <div id="unlock-error" style="display:none;color:#f87171;font-size:.74rem;margin-bottom:10px"></div>
+    <button id="unlock-btn" style="width:100%;background:var(--xmr);border:none;color:#fff;font-family:'Outfit',sans-serif;font-size:.86rem;font-weight:600;padding:12px;border-radius:10px;cursor:pointer">Unlock</button>
+    <button id="unlock-forget" style="width:100%;background:transparent;border:none;color:var(--text-dim);font-family:'Outfit',sans-serif;font-size:.74rem;padding:10px;margin-top:6px;cursor:pointer">Forget wallet & start over</button>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="js/keccak256.js"></script>
+<script src="js/monero-ed25519.js"></script>
+<script src="js/monero-wordlist.js"></script>
+<script src="js/monero-keys.js"></script>
+<script src="js/monero-subaddress.js"></script>
+<script src="js/wallet-vault.js"></script>
+<script src="js/monero-english-wordlist.js"></script>
+<script src="js/monero-rpc.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+
+  // ─── Wallet load (vault-aware) ───
+  // The verify page hands us the keys via WalletVault, which may be plaintext
+  // or AES-GCM encrypted with a session password. The unlock overlay handles
+  // both initial unlock and re-unlock after idle auto-lock.
+  let walletKeys = null;
+  const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+  let idleTimer = null;
+
+  const overlay     = document.getElementById('unlock-overlay');
+  const overlayMsg  = document.getElementById('unlock-msg');
+  const overlayPw   = document.getElementById('unlock-pw');
+  const overlayErr  = document.getElementById('unlock-error');
+  const overlayBtn  = document.getElementById('unlock-btn');
+  const overlayForget = document.getElementById('unlock-forget');
+
+  function showUnlock(message) {
+    overlayMsg.textContent = message;
+    overlayErr.style.display = 'none';
+    overlayPw.value = '';
+    overlay.style.display = 'flex';
+    setTimeout(() => overlayPw.focus(), 50);
+  }
+  function hideUnlock() {
+    overlay.style.display = 'none';
+    overlayPw.value = '';
+  }
+
+  overlayForget.addEventListener('click', () => {
+    WalletVault.clear();
+    walletKeys = null;
+    window.location.href = '/verify.html';
+  });
+
+  overlayBtn.addEventListener('click', tryUnlock);
+  overlayPw.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+
+  async function tryUnlock() {
+    overlayErr.style.display = 'none';
+    overlayBtn.disabled = true;
+    overlayBtn.textContent = 'Unlocking…';
+    try {
+      walletKeys = await WalletVault.unlock(overlayPw.value);
+      hideUnlock();
+      initDashboard();
+    } catch (e) {
+      overlayErr.textContent = e.message || 'Unlock failed';
+      overlayErr.style.display = 'block';
+    } finally {
+      overlayBtn.disabled = false;
+      overlayBtn.textContent = 'Unlock';
+    }
+  }
+
+  // No vault at all → bounce to verify
+  if (!WalletVault.hasBlob()) {
+    document.getElementById('loading-state').innerHTML = `
+      <div style="text-align:center">
+        <svg width="48" height="48" fill="none" stroke="var(--text-dim)" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:12px;opacity:.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <p style="color:var(--text);font-size:.95rem;font-weight:500;margin-bottom:6px">No wallet connected</p>
+        <p style="color:var(--text-dim);font-size:.8rem;margin-bottom:20px">Enter your seed phrase or private key to access your wallet</p>
+        <a href="/verify.html" style="display:inline-block;padding:12px 28px;background:var(--xmr);color:#fff;text-decoration:none;border-radius:10px;font-weight:600;font-size:.85rem;box-shadow:0 4px 24px rgba(255,102,0,0.2)">Open Wallet →</a>
+      </div>
+    `;
+    return;
+  }
+
+  // Encrypted → prompt; plaintext → load directly
+  if (WalletVault.isLocked()) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'none';
+    showUnlock('Enter your session password to unlock this wallet.');
+    return; // initDashboard() will run after successful unlock
+  } else {
+    walletKeys = WalletVault.readPlain();
+    initDashboard();
+    return;
+  }
+
+  // ─── Auto-lock plumbing ─────────────────────────────────────────────
+  function resetIdleTimer() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(autoLock, IDLE_TIMEOUT_MS);
+  }
+  function autoLock() {
+    // Drop the in-memory keys and reload the page. For an encrypted vault
+    // the ciphertext persists in sessionStorage across the reload, so the
+    // user can re-enter their password without re-deriving from a seed.
+    // For a plaintext vault we wipe and bounce to verify.
+    walletKeys = null;
+    if (WalletVault.isLocked()) {
+      window.location.reload();
+    } else {
+      WalletVault.clear();
+      window.location.href = '/verify.html';
+    }
+  }
+  function installIdleListeners() {
+    ['mousemove','keydown','click','touchstart','scroll'].forEach(ev => {
+      document.addEventListener(ev, resetIdleTimer, { passive: true });
+    });
+    resetIdleTimer();
+  }
+
+  // ─── Dashboard initialiser ──────────────────────────────────────────
+  function initDashboard() {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    populateWallet();
+    installIdleListeners();
+  }
+
+  async function populateWallet() {
+
+  const isWatchOnly = !!walletKeys.watchOnly;
+
+  // ─── Populate wallet info ───
+  document.getElementById('wallet-address').insertAdjacentText('afterbegin', walletKeys.address);
+  document.getElementById('receive-addr').textContent = walletKeys.address;
+  document.getElementById('key-spend').textContent = walletKeys.privateSpendKeyHex || '— not available (watch-only) —';
+  document.getElementById('key-view').textContent = walletKeys.privateViewKeyHex;
+  document.getElementById('key-pub-spend').textContent = walletKeys.publicSpendKeyHex || '— not available (watch-only) —';
+  document.getElementById('key-pub-view').textContent = walletKeys.publicViewKeyHex;
+
+  // Watch-only: hide spend-key-dependent UI
+  if (isWatchOnly) {
+    const sendBtn = document.getElementById('btn-send');
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = '0.4'; sendBtn.title = 'Watch-only wallet'; }
+    const subSection = document.getElementById('btn-sub-gen');
+    if (subSection) subSection.closest('.keys-section').style.display = 'none';
+    // Add a watch-only badge under the address
+    const badge = document.createElement('div');
+    badge.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin:8px 0;padding:4px 12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:100px;font-size:.7rem;font-weight:600;color:#22c55e;text-transform:uppercase;letter-spacing:.06em';
+    badge.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg> Watch-only';
+    document.querySelector('.wallet-header').appendChild(badge);
+  }
+
+  // ─── Subaddress generator (full-mode only) ───
+  // Reconstruct the raw byte buffers we need from the hex strings stored in
+  // sessionStorage. The dashboard never sees the seed phrase — only the keys.
+  const subKeys = isWatchOnly ? null : {
+    privateViewKey: MoneroKeys.hexToBytes(walletKeys.privateViewKeyHex),
+    publicSpendKey: MoneroKeys.hexToBytes(walletKeys.publicSpendKeyHex)
+  };
+  const subList  = document.getElementById('sub-list');
+  const subError = document.getElementById('sub-error');
+  document.getElementById('btn-sub-gen').addEventListener('click', () => {
+    subError.style.display = 'none';
+    if (!subKeys) { subError.textContent = 'Watch-only wallets cannot generate subaddresses'; subError.style.display = 'block'; return; }
+    try {
+      const major = parseInt(document.getElementById('sub-major').value, 10) || 0;
+      const minor = parseInt(document.getElementById('sub-minor').value, 10) || 0;
+      const sub = MoneroSubaddress.generate(subKeys, major, minor);
+      const row = document.createElement('div');
+      row.style.cssText = 'margin-top:10px;padding:10px 12px;background:var(--surface-2);border-radius:8px;font-family:"JetBrains Mono",monospace';
+      row.innerHTML =
+        '<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:4px">' +
+        major + '/' + minor + '</div>' +
+        '<div style="font-size:.62rem;word-break:break-all;line-height:1.5;cursor:pointer" title="Click to copy">' +
+        sub.address + '</div>';
+      row.querySelector('div:last-child').addEventListener('click', () => {
+        navigator.clipboard.writeText(sub.address);
+      });
+      subList.prepend(row);
+    } catch (e) {
+      subError.textContent = e.message;
+      subError.style.display = 'block';
+    }
+  });
+
+  // ─── Copy address on click ───
+  document.getElementById('wallet-address').addEventListener('click', () => {
+    navigator.clipboard.writeText(walletKeys.address).then(() => {
+      const toast = document.getElementById('addr-toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1500);
+    });
+  });
+
+  // ─── Key visibility toggles ───
+  ['spend', 'view'].forEach(type => {
+    const toggle = document.getElementById('toggle-' + type);
+    const value = document.getElementById('key-' + type);
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const hidden = value.classList.toggle('hidden');
+      toggle.textContent = hidden ? 'Show' : 'Hide';
+    });
+  });
+
+  // ─── Connect to node ───
+  const connDot = document.getElementById('conn-dot');
+  const connInfo = document.getElementById('conn-info');
+
+  MoneroRPC.onConnectionChange((state) => {
+    connDot.className = 'conn-dot ' + state.status;
+    if (state.status === 'connected') {
+      connInfo.innerHTML = `<span>${state.node}</span> · <span class="conn-height">${state.height?.toLocaleString()}</span>`;
+    } else if (state.status === 'connecting') {
+      connInfo.textContent = state.message || 'Connecting...';
+    } else {
+      connInfo.textContent = state.message || 'Disconnected';
+    }
+  });
+
+  try {
+    const node = await MoneroRPC.connect();
+
+    // Show dashboard
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    // Populate network info
+    document.getElementById('net-node').textContent = node.name;
+    document.getElementById('net-height').textContent = node.height?.toLocaleString() || '—';
+    document.getElementById('net-latency').textContent = node.latency + 'ms';
+    document.getElementById('net-pool').textContent = node.txPoolSize || '0';
+
+    // Get fee estimate
+    try {
+      const fee = await MoneroRPC.getFeeEstimate();
+      document.getElementById('net-fee').textContent = MoneroRPC.formatXMR(fee.feePerByte) + ' XMR/byte';
+    } catch(e) {
+      document.getElementById('net-fee').textContent = 'unavailable';
+    }
+
+    // Balance note
+    document.getElementById('balance-xmr').textContent = '—';
+    document.getElementById('balance-note').textContent =
+      'Balance scanning requires a light wallet server (coming soon)';
+
+  } catch (e) {
+    document.getElementById('loading-state').innerHTML = `
+      <p style="color:var(--danger)">${e.message}</p>
+      <p style="color:var(--text-dim);font-size:.72rem;margin-top:8px">This usually means CORS or mixed-content blocking. Open browser console (F12) for details.</p>
+      <button onclick="location.reload()" style="margin-top:12px;padding:10px 24px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;cursor:pointer">Retry</button>
+    `;
+  }
+
+  // ─── RECEIVE MODAL ───
+  document.getElementById('btn-receive').addEventListener('click', () => {
+    document.getElementById('receive-modal').classList.add('show');
+    // Generate QR code as SVG using a simple QR library inline
+    generateQR(walletKeys.address);
+  });
+
+  document.getElementById('receive-close').addEventListener('click', () => {
+    document.getElementById('receive-modal').classList.remove('show');
+  });
+
+  document.getElementById('receive-copy').addEventListener('click', () => {
+    navigator.clipboard.writeText(walletKeys.address).then(() => {
+      const btn = document.getElementById('receive-copy');
+      btn.textContent = 'Copied!';
+      btn.style.borderColor = 'rgba(34,197,94,0.3)';
+      btn.style.color = '#4ade80';
+      setTimeout(() => { btn.textContent = 'Copy Address'; btn.style.borderColor = ''; btn.style.color = ''; }, 2000);
+    });
+  });
+
+  // Close modal on backdrop click
+  document.getElementById('receive-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'receive-modal') e.target.classList.remove('show');
+  });
+
+  // ─── SEND MODAL ───
+  document.getElementById('btn-send').addEventListener('click', () => {
+    document.getElementById('send-modal').classList.add('show');
+  });
+
+  document.getElementById('send-close').addEventListener('click', () => {
+    document.getElementById('send-modal').classList.remove('show');
+  });
+
+  document.getElementById('send-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'send-modal') e.target.classList.remove('show');
+  });
+
+  // ─── QR CODE GENERATOR (simple version using canvas→dataURL) ───
+  function generateQR(text) {
+    const qrContainer = document.getElementById('qr-code');
+    // Use a public QR API as fallback — works without any library
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' +
+      encodeURIComponent('monero:' + text) + '&bgcolor=111113&color=eae8e4&format=svg';
+    qrContainer.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:220px;height:220px;border-radius:12px">';
+  }
+
+  // ─── Disconnect ───
+  document.getElementById('btn-disconnect').addEventListener('click', () => {
+    WalletVault.clear();
+    MoneroRPC.disconnect();
+    window.location.href = '/';
+  });
+
+  // ─── Custom node settings ───
+  const customNodeInput = document.getElementById('custom-node');
+  const nodeMsg = document.getElementById('node-msg');
+  customNodeInput.value = MoneroRPC.getCustomNode();
+  if (customNodeInput.value) {
+    nodeMsg.textContent = 'Using custom node — proxy bypassed.';
+  }
+  document.getElementById('btn-node-save').addEventListener('click', () => {
+    const v = customNodeInput.value.trim();
+    if (v && !/^https?:\/\//.test(v)) {
+      nodeMsg.textContent = 'URL must start with http:// or https://';
+      nodeMsg.style.color = '#f87171';
+      return;
+    }
+    MoneroRPC.setCustomNode(v);
+    nodeMsg.style.color = 'var(--success)';
+    nodeMsg.textContent = v ? 'Saved. Reload to reconnect.' : 'Cleared.';
+  });
+  document.getElementById('btn-node-clear').addEventListener('click', () => {
+    MoneroRPC.setCustomNode('');
+    customNodeInput.value = '';
+    nodeMsg.style.color = 'var(--text-dim)';
+    nodeMsg.textContent = 'Reverted to monero-web proxy. Reload to reconnect.';
+  });
+
+  // ─── Export wallet (JSON) ───
+  document.getElementById('btn-export').addEventListener('click', () => {
+    const dump = {
+      format: 'monero-web-wallet-backup',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      network: walletKeys.network || 'mainnet',
+      watchOnly: !!walletKeys.watchOnly,
+      address: walletKeys.address,
+      privateSpendKeyHex: walletKeys.privateSpendKeyHex || null,
+      privateViewKeyHex:  walletKeys.privateViewKeyHex,
+      publicSpendKeyHex:  walletKeys.publicSpendKeyHex || null,
+      publicViewKeyHex:   walletKeys.publicViewKeyHex,
+    };
+    const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'monero-web-' + walletKeys.address.slice(0, 8) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  // ─── Auto-refresh height every 30s ───
+  setInterval(async () => {
+    try {
+      const height = await MoneroRPC.getHeight();
+      document.getElementById('net-height').textContent = height.toLocaleString();
+      connInfo.innerHTML = `<span>${MoneroRPC.getConnectionState().node}</span> · <span class="conn-height">${height.toLocaleString()}</span>`;
+    } catch(e) {}
+  }, 30000);
+  } // end populateWallet
+});
+</script>
+</body>
+</html>

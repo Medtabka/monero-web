@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Monero Web — Verify Your Wallet</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='128' cy='128' r='128' fill='%23ff6600'/%3E%3Cpath d='M63.5 178.2V105.7l64.5 64.5 64.5-64.5v72.5h29.8v-99.9c0-6.7-5.4-12.1-12.1-12.1-3.2 0-6.3 1.3-8.6 3.5L128 143.3 54.4 69.7c-2.3-2.3-5.3-3.5-8.6-3.5-6.7 0-12.1 5.4-12.1 12.1v99.9h29.8z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+:root {
+  --bg:#0a0a0a; --surface:#111113; --surface-2:#19191d; --border:rgba(255,255,255,0.06);
+  --border-focus:rgba(255,130,47,0.4); --text:#eae8e4; --text-dim:#6e6c6a; --text-mid:#9a9894;
+  --xmr:#ff6600; --xmr-dim:rgba(255,102,0,0.12); --xmr-glow:rgba(255,102,0,0.2);
+  --success:#22c55e; --danger:#ef4444; --radius-sm:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;-webkit-font-smoothing:antialiased}
+body{min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden}
+
+.ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.ambient .orb{position:absolute;border-radius:50%;filter:blur(140px);animation:drift 20s ease-in-out infinite alternate}
+.ambient .orb-1{width:600px;height:600px;background:var(--xmr);opacity:.08;top:-20%;left:-15%}
+.ambient .orb-2{width:400px;height:400px;background:#ff8c42;opacity:.05;bottom:-15%;right:-10%;animation-delay:-8s}
+
+.page{position:relative;z-index:2;flex:1;display:flex;flex-direction:column}
+.container{width:100%;max-width:500px;margin:0 auto;padding:0 20px}
+
+nav{padding:20px 0;display:flex;align-items:center;justify-content:space-between;animation:fadeDown .7s ease-out both}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px}
+.logo-text{font-size:1.1rem;font-weight:600;letter-spacing:-0.02em}
+.logo-text span{color:var(--xmr)}
+.nav-links{display:flex;gap:6px}
+.nav-links a{color:var(--text-dim);text-decoration:none;font-size:.8rem;font-weight:500;padding:7px 14px;border-radius:100px;transition:all .25s}
+.nav-links a:hover{color:var(--text);background:var(--surface-2)}
+
+.main-area{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:20px 0 60px}
+.card{width:100%;animation:fadeUp .8s .15s ease-out both}
+.card-header{text-align:center;margin-bottom:28px}
+.card-header h1{font-size:1.5rem;font-weight:700;letter-spacing:-0.03em;line-height:1.2;margin-bottom:6px}
+.card-header p{font-size:.85rem;color:var(--text-dim);line-height:1.5}
+
+.tabs{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px;margin-bottom:20px}
+.tab{flex:1;padding:10px 8px;text-align:center;font-size:.82rem;font-weight:500;color:var(--text-dim);border-radius:8px;cursor:pointer;transition:all .25s;border:none;background:none;font-family:inherit}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--surface-2);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+
+.form-section{display:none}
+.form-section.active{display:block;animation:fadeIn .35s ease-out}
+
+.input-group{margin-bottom:14px}
+.input-group label{display:flex;align-items:center;justify-content:space-between;font-size:.78rem;font-weight:500;color:var(--text-mid);margin-bottom:6px}
+.input-group label .hint{font-weight:400;color:var(--text-dim);font-size:.72rem}
+.input-group textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.7;color:var(--text);resize:none;outline:none;transition:border-color .25s,box-shadow .25s;min-height:100px}
+.input-group textarea::placeholder{color:var(--text-dim);font-family:'JetBrains Mono',monospace}
+.input-group textarea:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--xmr-dim)}
+.input-group input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--text);outline:none;transition:border-color .25s,box-shadow .25s}
+.input-group input::placeholder{color:var(--text-dim)}
+.input-group input:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--xmr-dim)}
+
+.seed-status-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.word-count{font-size:.72rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace}
+.word-count .count{color:var(--xmr);font-weight:600}
+.word-count.valid .count{color:var(--success)}
+.seed-format-badge{font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:100px;letter-spacing:.03em}
+.seed-format-badge.bip39{background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);color:#38bdf8}
+.seed-format-badge.mymonero{background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.2);color:#c084fc}
+.seed-format-badge.polyseed{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:#4ade80}
+.seed-format-badge.standard{background:var(--xmr-dim);border:1px solid rgba(255,102,0,0.15);color:var(--xmr)}
+
+.btn-primary{width:100%;padding:14px;background:var(--xmr);color:#fff;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:600;border:none;border-radius:var(--radius-sm);cursor:pointer;transition:all .25s;box-shadow:0 4px 24px var(--xmr-glow);display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:hover{background:#e85d00;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ─── RESULTS ─── */
+.results{display:none;margin-top:20px;animation:fadeIn .4s ease-out}
+.results.show{display:block}
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px}
+.result-card .result-label{font-size:.7rem;font-weight:500;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.result-card .result-value{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text);word-break:break-all;line-height:1.6;user-select:all}
+.result-card .result-value.address{color:var(--xmr);font-size:.8rem;font-weight:500}
+.copy-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:.65rem;color:var(--text-dim);cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
+.copy-btn:hover{color:var(--text);border-color:rgba(255,255,255,.15)}
+.copy-btn.copied{color:var(--success);border-color:rgba(34,197,94,.3)}
+
+.result-match{display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:12px;font-size:.8rem;font-weight:500}
+.result-match.success{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15);color:#4ade80}
+.result-match.info{background:var(--xmr-dim);border:1px solid rgba(255,102,0,0.12);color:var(--xmr)}
+
+.error-msg{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);color:#f87171;padding:12px 16px;border-radius:var(--radius-sm);font-size:.8rem;margin-top:12px;display:none}
+.error-msg.show{display:block}
+
+.security-notice{display:flex;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px}
+.security-notice svg{flex-shrink:0;width:16px;height:16px;color:var(--success);margin-top:1px}
+.security-notice p{font-size:.72rem;line-height:1.5;color:var(--text-dim)}
+.security-notice strong{color:var(--text-mid)}
+
+footer{padding:20px 0;text-align:center;border-top:1px solid var(--border);position:relative;z-index:2}
+footer p{font-size:.7rem;color:var(--text-dim)}
+
+@keyframes drift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(30px,-20px) scale(1.1)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@media(min-width:520px){.container{max-width:520px}.card-header h1{font-size:1.7rem}}
+</style>
+</head>
+<body>
+
+<div class="ambient"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
+
+<div class="page">
+  <div class="container">
+    <nav>
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 256 256"><circle cx="128" cy="128" r="128" fill="#ff6600"/><path d="M63.5 178.2V105.7l64.5 64.5 64.5-64.5v72.5h29.8v-99.9c0-6.7-5.4-12.1-12.1-12.1-3.2 0-6.3 1.3-8.6 3.5L128 143.3 54.4 69.7c-2.3-2.3-5.3-3.5-8.6-3.5-6.7 0-12.1 5.4-12.1 12.1v99.9h29.8z" fill="#fff"/></svg>
+        <div class="logo-text">monero<span>web</span></div>
+      </div>
+      <div class="nav-links"><a href="/">Home</a><a href="#">GitHub</a></div>
+    </nav>
+  </div>
+
+  <div class="main-area">
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <h1>Access your Monero wallet</h1>
+          <p>Create a new wallet, restore from seed phrase, or import a private key. Everything runs locally in your browser.</p>
+        </div>
+
+        <div class="input-group" style="margin-bottom:14px">
+          <label>Network</label>
+          <select id="network-select" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:'Outfit',sans-serif;font-size:.82rem;color:var(--text);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg width=&quot;10&quot; height=&quot;6&quot; viewBox=&quot;0 0 10 6&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M1 1l4 4 4-4&quot; stroke=&quot;%236e6c6a&quot; stroke-width=&quot;1.5&quot; fill=&quot;none&quot;/></svg>');background-repeat:no-repeat;background-position:right 14px center">
+            <option value="mainnet">Mainnet</option>
+            <option value="stagenet">Stagenet</option>
+            <option value="testnet">Testnet</option>
+          </select>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="seed">Seed Phrase</button>
+          <button class="tab" data-tab="keys">Private Spend Key</button>
+          <button class="tab" data-tab="watch">Watch-Only</button>
+          <button class="tab" data-tab="create">Create New</button>
+        </div>
+
+        <!-- SEED TAB -->
+        <div class="form-section active" id="tab-seed">
+          <div class="input-group">
+            <label>Language</label>
+            <select id="seed-lang" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:'Outfit',sans-serif;font-size:.82rem;color:var(--text);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg width=&quot;10&quot; height=&quot;6&quot; viewBox=&quot;0 0 10 6&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M1 1l4 4 4-4&quot; stroke=&quot;%236e6c6a&quot; stroke-width=&quot;1.5&quot; fill=&quot;none&quot;/></svg>');background-repeat:no-repeat;background-position:right 14px center">
+              <option value="english">English</option>
+              <option value="chinese_simplified">简体中文 (Chinese simplified)</option>
+              <option value="dutch">Nederlands (Dutch)</option>
+              <option value="esperanto">Esperanto</option>
+              <option value="french">Français (French)</option>
+              <option value="german">Deutsch (German)</option>
+              <option value="italian">Italiano (Italian)</option>
+              <option value="japanese">日本語 (Japanese)</option>
+              <option value="lojban">Lojban</option>
+              <option value="portuguese">Português (Portuguese)</option>
+              <option value="russian">Русский (Russian)</option>
+              <option value="spanish">Español (Spanish)</option>
+              <option value="english_old">English (old)</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Mnemonic Seed <span class="hint">13 · 25 words</span></label>
+            <textarea id="seed-input" placeholder="Enter your seed phrase separated by spaces..." spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+            <div class="seed-status-row">
+              <div class="word-count" id="word-counter"><span class="count" id="wc-num">0</span> words</div>
+              <div class="seed-format-badge" id="seed-format" style="display:none"></div>
+            </div>
+          </div>
+
+          <div class="input-group" id="bip39-pass-group" style="display:none">
+            <label>BIP-39 Passphrase <span class="hint">Optional · only for 12-word seeds</span></label>
+            <input type="password" id="bip39-pass" placeholder="Leave empty if you didn't set one" autocomplete="off" spellcheck="false" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text);outline:none">
+          </div>
+
+          <div class="security-notice">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+            <p><strong>100% client-side.</strong> Your seed phrase is processed locally and never transmitted anywhere. Check the source code on GitHub.</p>
+          </div>
+
+          <button class="btn-primary" id="btn-derive-seed" disabled>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Derive Keys
+          </button>
+        </div>
+
+        <!-- KEYS TAB -->
+        <div class="form-section" id="tab-keys">
+          <div class="input-group">
+            <label>Private Spend Key <span class="hint">64-character hex</span></label>
+            <input type="text" id="spend-key-input" placeholder="Enter 64-character hex spend key..." spellcheck="false" autocomplete="off" maxlength="64">
+          </div>
+
+          <div class="security-notice">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+            <p><strong>100% client-side.</strong> Your private key never leaves this device.</p>
+          </div>
+
+          <button class="btn-primary" id="btn-derive-key" disabled>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Derive Keys
+          </button>
+        </div>
+
+        <!-- WATCH-ONLY TAB -->
+        <div class="form-section" id="tab-watch">
+          <div class="input-group">
+            <label>Wallet Address <span class="hint">95 chars · starts with 4, 5, 8, 9 or A</span></label>
+            <input type="text" id="watch-addr" placeholder="4..." spellcheck="false" autocomplete="off">
+          </div>
+          <div class="input-group">
+            <label>Private View Key <span class="hint">64-character hex</span></label>
+            <input type="text" id="watch-view" placeholder="64-character hex view key..." spellcheck="false" autocomplete="off" maxlength="64">
+          </div>
+
+          <div class="security-notice" style="border-color:rgba(34,197,94,0.15)">
+            <svg fill="none" stroke="var(--success)" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            <p><strong>Watch-only mode.</strong> The view key lets you scan for incoming payments but cannot spend them. You won't be able to send transactions or generate subaddresses without the spend key.</p>
+          </div>
+
+          <button class="btn-primary" id="btn-derive-watch" disabled>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            Open Watch-Only Wallet
+          </button>
+        </div>
+
+        <!-- CREATE TAB -->
+        <div class="form-section" id="tab-create">
+          <div class="input-group">
+            <label>Seed Language</label>
+            <select id="create-lang" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:'Outfit',sans-serif;font-size:.82rem;color:var(--text);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg width=&quot;10&quot; height=&quot;6&quot; viewBox=&quot;0 0 10 6&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M1 1l4 4 4-4&quot; stroke=&quot;%236e6c6a&quot; stroke-width=&quot;1.5&quot; fill=&quot;none&quot;/></svg>');background-repeat:no-repeat;background-position:right 14px center">
+              <option value="english">English</option>
+              <option value="chinese_simplified">简体中文 (Chinese simplified)</option>
+              <option value="dutch">Nederlands (Dutch)</option>
+              <option value="esperanto">Esperanto</option>
+              <option value="french">Français (French)</option>
+              <option value="german">Deutsch (German)</option>
+              <option value="italian">Italiano (Italian)</option>
+              <option value="japanese">日本語 (Japanese)</option>
+              <option value="lojban">Lojban</option>
+              <option value="portuguese">Português (Portuguese)</option>
+              <option value="russian">Русский (Russian)</option>
+              <option value="spanish">Español (Spanish)</option>
+            </select>
+          </div>
+          <div class="security-notice" style="border-color:rgba(255,102,0,0.15)">
+            <svg fill="none" stroke="var(--xmr)" stroke-width="2" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <p><strong>This creates a brand new Monero wallet.</strong> A 25-word seed phrase will be generated using your browser's cryptographic random number generator. Write it down and store it safely — it's the only way to recover your wallet.</p>
+          </div>
+
+          <button class="btn-primary" id="btn-create" style="background:#22c55e;box-shadow:0 4px 24px rgba(34,197,94,0.2)">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Generate New Wallet
+          </button>
+
+          <div id="create-result" style="display:none;margin-top:20px">
+            <div class="result-match info">◆ New wallet created — write down your seed phrase!</div>
+            <div class="result-card" style="border-color:rgba(255,102,0,0.2);background:rgba(255,102,0,0.04)">
+              <div class="result-label" style="color:var(--xmr)">Your Seed Phrase — WRITE THIS DOWN <button class="copy-btn" data-target="create-mnemonic">Copy</button></div>
+              <div class="result-value" id="create-mnemonic" style="font-size:.82rem;line-height:2;color:var(--text)"></div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Monero Address <button class="copy-btn" data-target="create-address">Copy</button></div>
+              <div class="result-value address" id="create-address"></div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Private Spend Key <button class="copy-btn" data-target="create-spend">Copy</button></div>
+              <div class="result-value" id="create-spend"></div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Private View Key <button class="copy-btn" data-target="create-view">Copy</button></div>
+              <div class="result-value" id="create-view"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ERROR -->
+        <div class="error-msg" id="error-msg"></div>
+
+        <!-- RESULTS -->
+        <div class="results" id="results">
+          <div class="result-match info" id="result-format"></div>
+
+          <div class="result-card" id="res-mnemonic-card" style="display:none;border-color:rgba(255,102,0,0.2);background:rgba(255,102,0,0.04)">
+            <div class="result-label" style="color:var(--xmr)">Recovered 25-word Mnemonic <button class="copy-btn" data-target="res-mnemonic">Copy</button></div>
+            <div class="result-value" id="res-mnemonic" style="font-size:.78rem;line-height:1.9;color:var(--text);word-spacing:.15em"></div>
+            <div style="font-size:.7rem;color:var(--text-dim);margin-top:8px;line-height:1.5">The standard Monero 25-word phrase is a reversible encoding of your spend key — write this down for backup.</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Monero Address <button class="copy-btn" data-target="res-address">Copy</button></div>
+            <div class="result-value address" id="res-address"></div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Private Spend Key <button class="copy-btn" data-target="res-spend">Copy</button></div>
+            <div class="result-value" id="res-spend"></div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Private View Key <button class="copy-btn" data-target="res-view">Copy</button></div>
+            <div class="result-value" id="res-view"></div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Public Spend Key <button class="copy-btn" data-target="res-pub-spend">Copy</button></div>
+            <div class="result-value" id="res-pub-spend"></div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Public View Key <button class="copy-btn" data-target="res-pub-view">Copy</button></div>
+            <div class="result-value" id="res-pub-view"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>monero-web.com — Open source · MIT License · Your keys never leave your browser</p>
+    </div>
+  </footer>
+</div>
+
+<!-- Crypto engine (order matters) -->
+<script src="js/keccak256.js"></script>
+<script src="js/monero-ed25519.js"></script>
+<script src="js/monero-wordlist.js"></script>
+<script src="js/bip39-wordlist.js"></script>
+<script src="js/bip39.js"></script>
+<script src="js/polyseed.js"></script>
+<script src="js/monero-keys.js"></script>
+<script src="js/wallet-vault.js"></script>
+<script src="js/monero-english-wordlist.js"></script>
+<script src="js/monero-wordlists-all.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const formats = {
+    12: { name:'BIP-39',          cls:'mymonero', icon:'◇' },
+    13: { name:'MyMonero Legacy', cls:'mymonero', icon:'◈' },
+    16: { name:'Polyseed',        cls:'mymonero', icon:'◉' },
+    25: { name:'Monero Standard', cls:'standard', icon:'◆' },
+  };
+
+  // ─── TABS ───
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      document.getElementById('results').classList.remove('show');
+      document.getElementById('error-msg').classList.remove('show');
+    });
+  });
+
+  // ─── SEED INPUT ───
+  const seedInput = document.getElementById('seed-input');
+  const wcNum = document.getElementById('wc-num');
+  const wordCounter = document.getElementById('word-counter');
+  const seedFormat = document.getElementById('seed-format');
+  const btnSeed = document.getElementById('btn-derive-seed');
+
+  seedInput.addEventListener('input', () => {
+    const words = seedInput.value.trim().split(/\s+/).filter(w => w.length > 0);
+    const count = words.length;
+    wcNum.textContent = count;
+    wordCounter.classList.remove('valid');
+    seedFormat.style.display = 'none';
+    seedFormat.className = 'seed-format-badge';
+    btnSeed.disabled = true;
+
+    const fmt = formats[count];
+    if (fmt) {
+      wordCounter.classList.add('valid');
+      btnSeed.disabled = false;
+      seedFormat.style.display = 'inline-block';
+      seedFormat.classList.add(fmt.cls);
+      seedFormat.textContent = fmt.icon + ' ' + fmt.name;
+    }
+    // BIP-39 passphrase row only shown for 12-word seeds
+    document.getElementById('bip39-pass-group').style.display =
+      (count === 12) ? 'block' : 'none';
+  });
+
+  // ─── SPEND KEY INPUT ───
+  const spendKeyInput = document.getElementById('spend-key-input');
+  const btnKey = document.getElementById('btn-derive-key');
+
+  spendKeyInput.addEventListener('input', () => {
+    btnKey.disabled = !/^[0-9a-fA-F]{64}$/.test(spendKeyInput.value.trim());
+  });
+
+  // ─── WATCH-ONLY INPUT ───
+  const watchAddr = document.getElementById('watch-addr');
+  const watchView = document.getElementById('watch-view');
+  const btnWatch  = document.getElementById('btn-derive-watch');
+  function refreshWatchBtn() {
+    const addrOk = /^[1-9A-HJ-NP-Za-km-z]{95,106}$/.test(watchAddr.value.trim());
+    const viewOk = /^[0-9a-fA-F]{64}$/.test(watchView.value.trim());
+    btnWatch.disabled = !(addrOk && viewOk);
+  }
+  watchAddr.addEventListener('input', refreshWatchBtn);
+  watchView.addEventListener('input', refreshWatchBtn);
+
+  btnWatch.addEventListener('click', () => {
+    const errorEl = document.getElementById('error-msg');
+    const resultsEl = document.getElementById('results');
+    errorEl.classList.remove('show');
+    resultsEl.classList.remove('show');
+    btnWatch.disabled = true;
+    btnWatch.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Loading...';
+
+    setTimeout(() => {
+      try {
+        const addr     = watchAddr.value.trim();
+        const viewHex  = watchView.value.trim().toLowerCase();
+        // Derive the public view key from the supplied private view key so the
+        // dashboard can still verify itself locally. We do NOT have the public
+        // spend key here (would require base58 address decoding), so the
+        // watch-only blob omits it — the dashboard hides spend-key-dependent
+        // features (subaddress generator, send) when this is the case.
+        const viewBytes = MoneroKeys.hexToBytes(viewHex);
+        const reduced   = MoneroEd25519.sc_reduce32(viewBytes);
+        const pubView   = MoneroEd25519.scalarmultBase(reduced);
+        const keys = {
+          address:            addr,
+          network:            document.getElementById('network-select').value,
+          privateSpendKeyHex: '',
+          privateViewKeyHex:  MoneroKeys.bytesToHex(reduced),
+          publicSpendKeyHex:  '',
+          publicViewKeyHex:   MoneroKeys.bytesToHex(pubView),
+          watchOnly:          true
+        };
+        showResults(keys);
+      } catch (e) {
+        errorEl.textContent = 'Error: ' + e.message;
+        errorEl.classList.add('show');
+      }
+      btnWatch.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg> Open Watch-Only Wallet';
+      refreshWatchBtn();
+    }, 60);
+  });
+
+  // ─── DERIVE FROM SEED ───
+  btnSeed.addEventListener('click', () => {
+    const errorEl = document.getElementById('error-msg');
+    const resultsEl = document.getElementById('results');
+    errorEl.classList.remove('show');
+    resultsEl.classList.remove('show');
+
+    btnSeed.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Deriving...';
+    btnSeed.disabled = true;
+
+    setTimeout(async () => {
+      try {
+        const mnemonic = seedInput.value.trim();
+        const lang = document.getElementById('seed-lang').value;
+        const network = document.getElementById('network-select').value;
+        const passphrase = document.getElementById('bip39-pass').value;
+        const keys = await MoneroKeys.deriveFromAnyMnemonic(mnemonic, lang, network, passphrase);
+        showResults(keys);
+      } catch(e) {
+        errorEl.textContent = 'Error: ' + e.message;
+        errorEl.classList.add('show');
+      }
+      btnSeed.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Derive Keys';
+      btnSeed.disabled = false;
+    }, 100);
+  });
+
+  // ─── DERIVE FROM KEY ───
+  btnKey.addEventListener('click', () => {
+    const errorEl = document.getElementById('error-msg');
+    const resultsEl = document.getElementById('results');
+    errorEl.classList.remove('show');
+    resultsEl.classList.remove('show');
+
+    btnKey.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Deriving...';
+    btnKey.disabled = true;
+
+    setTimeout(() => {
+      try {
+        const network = document.getElementById('network-select').value;
+        const keys = MoneroKeys.deriveFromSpendKey(spendKeyInput.value.trim().toLowerCase(), network);
+        showResults(keys);
+      } catch(e) {
+        errorEl.textContent = 'Error: ' + e.message;
+        errorEl.classList.add('show');
+      }
+      btnKey.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Derive Keys';
+      btnKey.disabled = false;
+    }, 100);
+  });
+
+  // ─── SHOW RESULTS ───
+  function showResults(keys) {
+    // Reveal the recovered mnemonic card only when we have one (spend-key
+    // import paths attach it; BIP-39 / polyseed / MyMonero don't because
+    // those formats are one-way and can't be reconstructed from the keys)
+    const mnemCard = document.getElementById('res-mnemonic-card');
+    if (keys.mnemonic && keys.wordCount === 25) {
+      document.getElementById('res-mnemonic').textContent = keys.mnemonic;
+      mnemCard.style.display = 'block';
+    } else {
+      mnemCard.style.display = 'none';
+    }
+    document.getElementById('res-address').textContent = keys.address;
+    document.getElementById('res-spend').textContent = keys.privateSpendKeyHex;
+    document.getElementById('res-view').textContent = keys.privateViewKeyHex;
+    document.getElementById('res-pub-spend').textContent = keys.publicSpendKeyHex;
+    document.getElementById('res-pub-view').textContent = keys.publicViewKeyHex;
+
+    const formatEl = document.getElementById('result-format');
+    if (keys.wordCount) {
+      const fmt = formats[keys.wordCount];
+      formatEl.textContent = (fmt ? fmt.icon + ' ' : '') + 'Derived via ' + (fmt ? fmt.name : keys.wordCount + '-word seed');
+    } else {
+      formatEl.textContent = '◆ Derived from private spend key';
+    }
+
+    // Store keys for Open Wallet button
+    window._derivedKeys = keys;
+
+    // Show or create the Open Wallet block (password input + button)
+    let openBlock = document.getElementById('open-block');
+    if (!openBlock) {
+      openBlock = document.createElement('div');
+      openBlock.id = 'open-block';
+      openBlock.style.marginTop = '16px';
+      openBlock.innerHTML =
+        '<label style="display:block;font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">' +
+        'Session password <span style="text-transform:none;letter-spacing:0;color:var(--text-dim)">(optional · encrypts in-tab storage)</span></label>' +
+        '<input id="session-pw" type="password" autocomplete="new-password" placeholder="Leave empty for no encryption" ' +
+        'style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:\'JetBrains Mono\',monospace;font-size:.78rem;color:var(--text);outline:none;margin-bottom:10px">' +
+        '<button id="btn-open-wallet" class="btn-primary" style="background:#22c55e;box-shadow:0 4px 24px rgba(34,197,94,0.2)">' +
+        '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Open Wallet Dashboard</button>';
+      document.getElementById('results').appendChild(openBlock);
+      document.getElementById('btn-open-wallet').addEventListener('click', async () => {
+        if (!window._derivedKeys) return;
+        const k = window._derivedKeys;
+        const pw = document.getElementById('session-pw').value;
+        await WalletVault.store({
+          address: k.address,
+          network: k.network,
+          privateSpendKeyHex: k.privateSpendKeyHex,
+          privateViewKeyHex:  k.privateViewKeyHex,
+          publicSpendKeyHex:  k.publicSpendKeyHex,
+          publicViewKeyHex:   k.publicViewKeyHex,
+          watchOnly:          !!k.watchOnly,
+        }, pw);
+        window.location.href = '/dashboard.html';
+      });
+    }
+
+    document.getElementById('results').classList.add('show');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ─── COPY BUTTONS ───
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.target);
+      navigator.clipboard.writeText(target.textContent).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+  });
+
+  // ─── CREATE NEW WALLET ───
+  const btnCreate = document.getElementById('btn-create');
+  if (btnCreate) {
+    btnCreate.addEventListener('click', () => {
+      btnCreate.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Generating...';
+      btnCreate.disabled = true;
+
+      setTimeout(() => {
+        try {
+          const wallet = MoneroKeys.generateWallet(
+            document.getElementById('create-lang').value,
+            document.getElementById('network-select').value
+          );
+
+          document.getElementById('create-mnemonic').textContent = wallet.mnemonic;
+          document.getElementById('create-address').textContent = wallet.address;
+          document.getElementById('create-spend').textContent = wallet.privateSpendKeyHex;
+          document.getElementById('create-view').textContent = wallet.privateViewKeyHex;
+          document.getElementById('create-result').style.display = 'block';
+
+          // Store for Open Wallet button
+          window._derivedKeys = wallet;
+
+          // Add Open Wallet block (password + button) if not exists
+          let openBlock = document.getElementById('open-block-create');
+          if (!openBlock) {
+            openBlock = document.createElement('div');
+            openBlock.id = 'open-block-create';
+            openBlock.style.marginTop = '12px';
+            openBlock.innerHTML =
+              '<label style="display:block;font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">' +
+              'Session password <span style="text-transform:none;letter-spacing:0;color:var(--text-dim)">(optional · encrypts in-tab storage)</span></label>' +
+              '<input id="session-pw-create" type="password" autocomplete="new-password" placeholder="Leave empty for no encryption" ' +
+              'style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:\'JetBrains Mono\',monospace;font-size:.78rem;color:var(--text);outline:none;margin-bottom:10px">' +
+              '<button id="btn-open-wallet-create" class="btn-primary" style="background:var(--xmr)">' +
+              '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Open Wallet Dashboard</button>';
+            document.getElementById('create-result').appendChild(openBlock);
+            document.getElementById('btn-open-wallet-create').addEventListener('click', async () => {
+              if (!window._derivedKeys) return;
+              const k = window._derivedKeys;
+              const pw = document.getElementById('session-pw-create').value;
+              await WalletVault.store({
+                address: k.address,
+                network: k.network,
+                privateSpendKeyHex: k.privateSpendKeyHex,
+                privateViewKeyHex:  k.privateViewKeyHex,
+                publicSpendKeyHex:  k.publicSpendKeyHex,
+                publicViewKeyHex:   k.publicViewKeyHex,
+              }, pw);
+              window.location.href = '/dashboard.html';
+            });
+          }
+
+          // Re-bind copy buttons for new elements
+          document.querySelectorAll('#create-result .copy-btn').forEach(btn => {
+            btn.onclick = () => {
+              const target = document.getElementById(btn.dataset.target);
+              navigator.clipboard.writeText(target.textContent).then(() => {
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+              });
+            };
+          });
+
+        } catch(e) {
+          document.getElementById('error-msg').textContent = 'Error: ' + e.message;
+          document.getElementById('error-msg').classList.add('show');
+        }
+        btnCreate.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Generate New Wallet';
+        btnCreate.disabled = false;
+      }, 100);
+    });
+  }
+});
+</script>
+</body>
+</html>

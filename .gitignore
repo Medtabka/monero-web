@@ -1,0 +1,22 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Node / build artifacts (we don't have a build step, but just in case)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Netlify local cache
+.netlify/
+
+# Secrets — never commit these
+.env
+.env.local
+*.key
+*.pem
+secrets/

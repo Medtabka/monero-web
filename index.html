@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monero Web — Open-Source XMR Wallet in your Browser</title>
+<meta name="description" content="A non-custodial Monero wallet that runs entirely in your browser. Supports BIP-39, MyMonero 13-word, Polyseed 16-word and standard 25-word seeds. Open source. No downloads. Your keys never leave your device.">
+<meta name="keywords" content="monero wallet, xmr web wallet, monero browser wallet, mymonero alternative, polyseed, bip39 monero, non-custodial monero, open source xmr">
+<link rel="canonical" href="https://monero-web.com">
+
+<meta property="og:title" content="Monero Web — Open-Source XMR Wallet in your Browser">
+<meta property="og:description" content="Access your Monero from any browser. Four seed formats. Non-custodial. Open source. Zero downloads.">
+<meta property="og:url" content="https://monero-web.com">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Monero Web",
+  "url": "https://monero-web.com",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Any modern browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "isAccessibleForFree": true
+}
+</script>
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='128' cy='128' r='128' fill='%23ff6600'/%3E%3Cpath d='M63.5 178.2V105.7l64.5 64.5 64.5-64.5v72.5h29.8v-99.9c0-6.7-5.4-12.1-12.1-12.1-3.2 0-6.3 1.3-8.6 3.5L128 143.3 54.4 69.7c-2.3-2.3-5.3-3.5-8.6-3.5-6.7 0-12.1 5.4-12.1 12.1v99.9h29.8z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+<style>
+:root {
+  --bg:#0a0a0a; --surface:#111113; --surface-2:#17171b; --surface-3:#1f1f25;
+  --border:rgba(255,255,255,0.06); --border-strong:rgba(255,255,255,0.12);
+  --text:#eae8e4; --text-mid:#9a9894; --text-dim:#6e6c6a;
+  --xmr:#ff6600; --xmr-dim:rgba(255,102,0,0.12); --xmr-glow:rgba(255,102,0,0.25);
+  --success:#22c55e; --radius:14px; --radius-sm:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;line-height:1.6}
+a{color:inherit;text-decoration:none}
+img,svg{display:block}
+
+.container{width:100%;max-width:1100px;margin:0 auto;padding:0 24px}
+
+/* ── Ambient background ── */
+.ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(120px);opacity:.35}
+.orb-1{width:520px;height:520px;background:#ff6600;top:-180px;right:-160px}
+.orb-2{width:480px;height:480px;background:#7c2d00;bottom:-200px;left:-160px;opacity:.25}
+.grid-bg{position:fixed;inset:0;z-index:1;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at center,#000 25%,transparent 75%);pointer-events:none}
+
+.page{position:relative;z-index:2;flex:1;display:flex;flex-direction:column}
+
+/* ── Nav ── */
+nav{padding:20px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:30px;height:30px}
+.logo-text{font-size:1.05rem;font-weight:700;letter-spacing:-0.02em}
+.logo-text span{color:var(--xmr)}
+.nav-right{display:flex;align-items:center;gap:6px}
+.nav-right a{color:var(--text-mid);font-size:.82rem;font-weight:500;padding:8px 14px;border-radius:100px;transition:all .25s}
+.nav-right a:hover{color:var(--text);background:var(--surface-2)}
+.nav-right a.cta{background:var(--xmr);color:#fff;box-shadow:0 4px 16px var(--xmr-glow)}
+.nav-right a.cta:hover{background:#e85d00}
+
+/* ── Hero ── */
+.hero{padding:88px 0 64px;text-align:center}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--xmr-dim);border:1px solid rgba(255,102,0,0.2);color:var(--xmr);font-size:.72rem;font-weight:600;padding:6px 14px;border-radius:100px;margin-bottom:24px;text-transform:uppercase;letter-spacing:.06em}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--xmr);box-shadow:0 0 8px var(--xmr)}
+.hero h1{font-size:clamp(2.4rem,6vw,4.4rem);font-weight:800;letter-spacing:-0.035em;line-height:1.05;margin-bottom:24px}
+.hero h1 .accent{background:linear-gradient(135deg,#ff6600 0%,#ff9a3c 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{font-size:1.15rem;color:var(--text-mid);max-width:620px;margin:0 auto 36px;line-height:1.55}
+.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:36px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:12px;font-family:'Outfit',sans-serif;font-size:.92rem;font-weight:600;cursor:pointer;border:1px solid var(--border);transition:all .25s;text-decoration:none}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:var(--xmr);border-color:var(--xmr);color:#fff;box-shadow:0 8px 28px var(--xmr-glow)}
+.btn-primary:hover{background:#e85d00;transform:translateY(-1px)}
+.btn-ghost{background:var(--surface);color:var(--text)}
+.btn-ghost:hover{background:var(--surface-2);border-color:var(--border-strong)}
+.trust-strip{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;color:var(--text-dim);font-size:.78rem;font-weight:500}
+.trust-strip span{display:inline-flex;align-items:center;gap:6px}
+.trust-strip svg{width:14px;height:14px;color:var(--success)}
+
+/* ── Section ── */
+section{padding:72px 0;position:relative}
+.section-eyebrow{display:inline-block;font-size:.72rem;color:var(--xmr);font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px}
+.section-title{font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:700;letter-spacing:-0.025em;line-height:1.15;margin-bottom:14px;max-width:680px}
+.section-sub{color:var(--text-mid);font-size:1rem;max-width:620px;margin-bottom:48px}
+
+/* ── Seed-format grid ── */
+.seed-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.seed-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:all .25s;position:relative;overflow:hidden}
+.seed-card:hover{border-color:var(--border-strong);transform:translateY(-2px)}
+.seed-card .num{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--xmr);font-weight:600;margin-bottom:10px;letter-spacing:.04em}
+.seed-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px;letter-spacing:-0.01em}
+.seed-card p{font-size:.82rem;color:var(--text-mid);line-height:1.55;margin-bottom:14px}
+.seed-card .users{font-size:.72rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace}
+.seed-card .users::before{content:"used by  ";color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em}
+
+/* ── How it works ── */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;position:relative}
+.step-num{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:var(--xmr-dim);color:var(--xmr);font-weight:700;font-family:'JetBrains Mono',monospace;font-size:.85rem;margin-bottom:18px;border:1px solid rgba(255,102,0,0.2)}
+.step h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+.step p{color:var(--text-mid);font-size:.85rem;line-height:1.6}
+
+/* ── Trust grid ── */
+.trust-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.trust-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.trust-card .icon{width:38px;height:38px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:var(--xmr)}
+.trust-card .icon svg{width:18px;height:18px}
+.trust-card h3{font-size:1rem;font-weight:600;margin-bottom:6px;letter-spacing:-0.01em}
+.trust-card p{font-size:.82rem;color:var(--text-mid);line-height:1.55}
+
+/* ── Feature list ── */
+.features-row{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+@media (max-width:780px){.features-row{grid-template-columns:1fr;gap:24px}}
+.feature-list{display:flex;flex-direction:column;gap:14px}
+.feature-item{display:flex;gap:14px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.feature-item .check{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--xmr-dim);color:var(--xmr);display:flex;align-items:center;justify-content:center;margin-top:2px}
+.feature-item .check svg{width:12px;height:12px}
+.feature-item h4{font-size:.92rem;font-weight:600;margin-bottom:2px}
+.feature-item p{font-size:.78rem;color:var(--text-mid);line-height:1.5}
+
+/* ── Code preview card ── */
+.preview{background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);border:1px solid var(--border);border-radius:var(--radius);padding:22px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-mid);line-height:1.85;position:relative}
+.preview .preview-bar{display:flex;gap:6px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.preview .preview-bar i{width:10px;height:10px;border-radius:50%;background:var(--surface-3)}
+.preview .k{color:#ff9a3c}
+.preview .s{color:#7ee787}
+.preview .c{color:var(--text-dim)}
+.preview .v{color:#79c0ff}
+
+/* ── FAQ ── */
+.faq{display:flex;flex-direction:column;gap:10px;max-width:760px}
+.faq details{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px 22px;transition:border-color .2s}
+.faq details[open]{border-color:var(--border-strong)}
+.faq summary{cursor:pointer;font-weight:600;font-size:.95rem;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--xmr);font-size:1.4rem;font-weight:300;line-height:1;transition:transform .2s}
+.faq details[open] summary::after{content:"−"}
+.faq p{color:var(--text-mid);font-size:.86rem;line-height:1.65;margin-top:12px}
+.faq a{color:var(--xmr);border-bottom:1px solid rgba(255,102,0,0.3)}
+
+/* ── Final CTA ── */
+.final-cta{text-align:center;background:linear-gradient(180deg,var(--surface) 0%,#0c0c0e 100%);border:1px solid var(--border);border-radius:var(--radius);padding:64px 32px;position:relative;overflow:hidden}
+.final-cta::before{content:"";position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse at center,var(--xmr-glow) 0%,transparent 60%);pointer-events:none}
+.final-cta > *{position:relative}
+.final-cta h2{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:700;letter-spacing:-0.02em;margin-bottom:12px}
+.final-cta p{color:var(--text-mid);margin-bottom:28px;max-width:520px;margin-left:auto;margin-right:auto}
+
+/* ── Footer ── */
+footer{padding:48px 0 32px;border-top:1px solid var(--border);margin-top:64px;color:var(--text-dim);font-size:.78rem}
+.footer-row{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.footer-row a{color:var(--text-mid);transition:color .2s}
+.footer-row a:hover{color:var(--text)}
+.footer-meta{text-align:center;color:var(--text-dim)}
+
+@media (max-width:680px){
+  .hero{padding:56px 0 40px}
+  section{padding:56px 0}
+  nav{padding:14px 0}
+  .nav-right a:not(.cta){display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="ambient"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
+<div class="grid-bg"></div>
+
+<div class="page">
+
+  <!-- ─── NAV ─── -->
+  <header>
+    <div class="container">
+      <nav>
+        <a href="/" class="logo">
+          <svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="128" fill="#ff6600"/><path d="M63.5 178.2V105.7l64.5 64.5 64.5-64.5v72.5h29.8v-99.9c0-6.7-5.4-12.1-12.1-12.1-3.2 0-6.3 1.3-8.6 3.5L128 143.3 54.4 69.7c-2.3-2.3-5.3-3.5-8.6-3.5-6.7 0-12.1 5.4-12.1 12.1v99.9h29.8z" fill="#fff"/></svg>
+          <div class="logo-text">monero<span>web</span></div>
+        </a>
+        <div class="nav-right">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#faq">FAQ</a>
+          <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
+          <a href="/verify.html" class="cta">Open Wallet →</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ─── HERO ─── -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge"><span class="dot"></span> Live · Non-Custodial · 100% Open Source</div>
+      <h1>The Monero wallet that<br>lives in your <span class="accent">browser</span>.</h1>
+      <p class="lead">Open your XMR from any device, on any network, with no installs. Every cryptographic operation runs locally in your browser — your seed phrase never crosses the wire.</p>
+      <div class="hero-cta">
+        <a href="/verify.html" class="btn btn-primary">
+          <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Open your wallet
+        </a>
+        <a href="https://github.com/" target="_blank" rel="noopener" class="btn btn-ghost">
+          <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 .3a12 12 0 00-3.79 23.4c.6.1.82-.26.82-.58v-2.05c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.39 1.24-3.23-.13-.31-.54-1.54.12-3.21 0 0 1.01-.32 3.3 1.23a11.45 11.45 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.67.25 2.9.12 3.21.77.84 1.24 1.92 1.24 3.23 0 4.62-2.81 5.65-5.49 5.94.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.83.58A12 12 0 0012 .3"/></svg>
+          Star on GitHub
+        </a>
+      </div>
+      <div class="trust-strip">
+        <span><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Keys never leave the device</span>
+        <span><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Zero downloads</span>
+        <span><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Zero trackers</span>
+        <span><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> MIT licensed</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── SEED FORMATS ─── -->
+  <section id="formats">
+    <div class="container">
+      <span class="section-eyebrow">No wallet left behind</span>
+      <h2 class="section-title">Every Monero seed format. One wallet.</h2>
+      <p class="section-sub">Most browser wallets only handle one mnemonic standard. We support all four — including the legacy 13-word seeds nobody else has touched in years.</p>
+      <div class="seed-grid">
+        <div class="seed-card">
+          <div class="num">12 WORDS</div>
+          <h3>BIP-39</h3>
+          <p>Standard hardware-wallet mnemonic. PBKDF2-SHA512 → SLIP-0010 derivation along the Monero coin path <code>m/44'/128'/0'</code>.</p>
+          <div class="users">Trezor · Ledger · Cake</div>
+        </div>
+        <div class="seed-card">
+          <div class="num">13 WORDS</div>
+          <h3>MyMonero Legacy</h3>
+          <p>The 12-data + 1-checksum format used by MyMonero since 2014. Your old seed still works here, in any browser, forever.</p>
+          <div class="users">MyMonero · Edge</div>
+        </div>
+        <div class="seed-card">
+          <div class="num">16 WORDS</div>
+          <h3>Polyseed</h3>
+          <p>Modern compact format with embedded wallet birthday and forward-compatible feature flags. GF(2¹¹) checksum, 4-char prefix matching.</p>
+          <div class="users">Feather · Monero GUI 0.18+</div>
+        </div>
+        <div class="seed-card">
+          <div class="num">25 WORDS</div>
+          <h3>Monero Standard</h3>
+          <p>The original 24-data + 1-checksum format from <code>monero-wallet-cli</code>. Available in 13 languages, all loaded locally.</p>
+          <div class="users">monerod · GUI · CLI</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── HOW IT WORKS ─── -->
+  <section id="how">
+    <div class="container">
+      <span class="section-eyebrow">How it works</span>
+      <h2 class="section-title">Three steps. No accounts. No emails.</h2>
+      <p class="section-sub">There is nothing to sign up for. Open the page, paste your seed, and your wallet is loaded.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <h3>Enter your seed</h3>
+          <p>Type or paste any of the four supported mnemonics — or a raw private spend key in hex. We auto-detect the format from the word count.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <h3>Keys derive locally</h3>
+          <p>Your browser runs Keccak-256, ed25519 scalar mult, and the full key derivation chain. The page never makes a single network request that could leak your seed.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <h3>Use your wallet</h3>
+          <p>See your address, generate subaddresses on demand, watch live network height from public Monero nodes, and receive payments via QR code.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WHY TRUST ─── -->
+  <section>
+    <div class="container">
+      <span class="section-eyebrow">Why trust it</span>
+      <h2 class="section-title">Built the way a wallet <em>should</em> be built.</h2>
+      <p class="section-sub">No frameworks. No build pipeline. No package supply chain to compromise. Just hand-written, auditable JavaScript and a few HTML files.</p>
+      <div class="trust-grid">
+        <div class="trust-card">
+          <div class="icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <h3>Keys stay local</h3>
+          <p>Your seed and private keys are derived inside your browser tab. They are never serialised, never logged, never sent anywhere — not even to us.</p>
+        </div>
+        <div class="trust-card">
+          <div class="icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6"/><path d="M8 6L2 12l6 6"/></svg></div>
+          <h3>Readable source</h3>
+          <p>Plain HTML and JavaScript. No webpack, no minifier, no hidden transforms. Open DevTools and read the exact code that touches your keys.</p>
+        </div>
+        <div class="trust-card">
+          <div class="icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+          <h3>Zero dependencies</h3>
+          <p>The crypto engine is hand-written: Keccak-256, ed25519, base58, all four mnemonic codecs, BIP-39 / SLIP-0010, and polyseed. No npm tree to audit.</p>
+        </div>
+        <div class="trust-card">
+          <div class="icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+          <h3>54 / 54 tests passing</h3>
+          <p>The key derivation engine is verified against test vectors from the official Monero source for all 13 supported wordlist languages.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FEATURES ─── -->
+  <section id="features">
+    <div class="container">
+      <span class="section-eyebrow">What's inside</span>
+      <h2 class="section-title">Everything you need to receive XMR today.</h2>
+      <div class="features-row">
+        <div class="feature-list">
+          <div class="feature-item">
+            <div class="check"><svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div><h4>Subaddress generation</h4><p>Create unlimited account/index pairs to keep payments unlinkable.</p></div>
+          </div>
+          <div class="feature-item">
+            <div class="check"><svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div><h4>Live network status</h4><p>Daemon height, fee estimate, and tx-pool size from a pool of public Monero nodes.</p></div>
+          </div>
+          <div class="feature-item">
+            <div class="check"><svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div><h4>QR-code receive</h4><p>Generated client-side. The address never touches a third-party QR service.</p></div>
+          </div>
+          <div class="feature-item">
+            <div class="check"><svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div><h4>Create new wallets</h4><p>Generate a fresh 25-word seed in any of 13 languages using the browser's CSPRNG.</p></div>
+          </div>
+          <div class="feature-item">
+            <div class="check"><svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div><h4>Import by private key</h4><p>Skip the mnemonic and paste a 64-char hex spend key directly.</p></div>
+          </div>
+        </div>
+        <div class="preview">
+          <div class="preview-bar"><i></i><i></i><i></i></div>
+<span class="c">// monero-keys.js — derived locally in your tab</span><br>
+<span class="k">async function</span> <span class="v">deriveFromAnyMnemonic</span>(seed) {<br>
+&nbsp;&nbsp;<span class="k">const</span> count = seed.split(<span class="s">/\s+/</span>).length;<br>
+&nbsp;&nbsp;<span class="k">if</span> (count === <span class="v">12</span>) <span class="k">return</span> deriveFromBip39(seed);<br>
+&nbsp;&nbsp;<span class="k">if</span> (count === <span class="v">13</span>) <span class="k">return</span> deriveMyMonero(seed);<br>
+&nbsp;&nbsp;<span class="k">if</span> (count === <span class="v">16</span>) <span class="k">return</span> derivePolyseed(seed);<br>
+&nbsp;&nbsp;<span class="k">if</span> (count === <span class="v">25</span>) <span class="k">return</span> deriveStandard(seed);<br>
+}<br><br>
+<span class="c">// → spendKey, viewKey, publicKeys, address</span><br>
+<span class="c">// Nothing leaves the browser. Ever.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FAQ ─── -->
+  <section id="faq">
+    <div class="container">
+      <span class="section-eyebrow">FAQ</span>
+      <h2 class="section-title">The honest answers.</h2>
+      <p class="section-sub">If you have a question we haven't answered here, open an issue on GitHub.</p>
+
+      <div class="faq">
+        <details>
+          <summary>Is this actually non-custodial?</summary>
+          <p>Yes. Your seed and private keys never leave your browser tab. The wallet only talks to the network for read-only RPC calls (block height, fee estimate) — and those calls don't include any of your keys. You can verify this in DevTools → Network.</p>
+        </details>
+        <details>
+          <summary>How is this different from MyMonero?</summary>
+          <p>MyMonero is a light-wallet service: a server scans the blockchain on your behalf using your view key. We don't run any server. Right now we don't yet do output scanning at all — see "Can I send XMR?" below — but the trade-off is that we never see your view key either.</p>
+        </details>
+        <details>
+          <summary>Can I send XMR from here?</summary>
+          <p>Not yet. Sending Monero requires scanning the blockchain to find your spendable outputs, then constructing a ring-signature transaction client-side. We're building this in two stages: first an opt-in light-wallet integration (your view key, a server you can self-host), then full WebAssembly-based scanning so the whole thing runs in your tab. For now, you can <strong>receive</strong> XMR safely.</p>
+        </details>
+        <details>
+          <summary>Why a web wallet at all? Aren't they less secure?</summary>
+          <p>A web wallet you can read the source of is no less secure than a desktop app you can read the source of — both run code the developer wrote on hardware you control. The real risk with web wallets is supply-chain compromise. We mitigate that by having zero npm dependencies, no build pipeline, and serving static files with a strict CSP. You can also clone the repo and serve it locally.</p>
+        </details>
+        <details>
+          <summary>Which browsers are supported?</summary>
+          <p>Anything modern with SubtleCrypto and BigInt — Chrome, Firefox, Safari, Brave, Edge, Tor Browser. No special permissions, no extensions.</p>
+        </details>
+        <details>
+          <summary>Are you going to add a token, NFT, or premium tier?</summary>
+          <p>No. The wallet is MIT-licensed, free, and will stay that way. There is no token, no fee, no premium plan. If you want to support the project, star it on GitHub or contribute code.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FINAL CTA ─── -->
+  <section>
+    <div class="container">
+      <div class="final-cta">
+        <h2>Ready to open your wallet?</h2>
+        <p>It takes about three seconds. There's nothing to install and no account to create.</p>
+        <a href="/verify.html" class="btn btn-primary">
+          <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Open Monero Web →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-row">
+        <a href="/verify.html">Open Wallet</a>
+        <a href="#formats">Seed formats</a>
+        <a href="#how">How it works</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <div class="footer-meta">monero-web.com · MIT licensed · Not affiliated with The Monero Project · XMR is property of its respective community</div>
+    </div>
+  </footer>
+</div>
+
+</body>
+</html>
