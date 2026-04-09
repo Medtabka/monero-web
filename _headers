@@ -24,32 +24,19 @@
   # `preload` makes us eligible for the HSTS preload list (apply at hstspreload.org).
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 
-# ── Cache-control overrides ─────────────────────────────────────────
-# Cloudflare Pages defaults to a 4-hour browser cache on JS/CSS, which
-# means deployed fixes don't reach users until they hard-reload. For an
-# actively-developing wallet that's wrong. We force HTML, JS, and JSON
-# to revalidate on every request: the browser asks Cloudflare every
-# time, Cloudflare returns 304 if the ETag still matches (cheap), and
-# 200 with the new content if it changed. No more sticky cache.
-
-/*.html
+  # Cache-Control on the catch-all so deployed fixes reach users immediately.
+  # Cloudflare Pages defaults to max-age=14400 (4 hours), which means every
+  # push to main needs users to hard-reload before they see the change. For
+  # an actively-developing wallet that's wrong. With max-age=0, the browser
+  # asks Cloudflare on every reload; Cloudflare's edge cache still serves
+  # the response (no extra origin load) and returns 304 via ETag if the
+  # file hasn't changed. Net cost: ~50ms per page reload. Net benefit:
+  # every git push lands in users' browsers on their next visit.
   Cache-Control: public, max-age=0, must-revalidate
 
-/*.js
-  Cache-Control: public, max-age=0, must-revalidate
-
-/*.json
-  Cache-Control: public, max-age=0, must-revalidate
-
-/MANIFEST.txt
-  Cache-Control: public, max-age=0, must-revalidate
-
-# Fonts and images don't change between deploys (their URLs are
-# content-addressed by hash via the fonts/fonts.css generator), so
-# they can keep the long cache for performance.
-
+# ── Long-cache exceptions ───────────────────────────────────────────
+# Fonts are filename-hashed in fonts/fonts.css so a content change ALWAYS
+# changes the URL. Safe to cache for a year and tell the browser it's
+# immutable (won't even ask for revalidation).
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
-
-/*.svg
-  Cache-Control: public, max-age=86400, must-revalidate
