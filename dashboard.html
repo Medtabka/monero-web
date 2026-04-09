@@ -128,6 +128,29 @@ footer p{font-size:.65rem;color:var(--text-dim)}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .fade-in{animation:fadeIn .4s ease-out}
+
+/* ── Mobile polish ─────────────────────────────────────────────────── */
+@media (max-width:520px){
+  .container{padding:0 16px}
+  .wallet-header{padding:18px 0 10px}
+  .wallet-address{font-size:.58rem;padding:10px 12px}
+  .balance-value{font-size:1.7rem}
+  .actions{gap:8px;margin-bottom:18px}
+  .action-btn{padding:12px;font-size:.8rem}
+  .info-grid{gap:8px}
+  .info-card{padding:12px}
+  .keys-section{margin-bottom:18px}
+  .key-card{padding:12px}
+  .modal{padding:20px;max-width:calc(100vw - 32px)}
+  #qr-code svg,#qr-code img{max-width:100%;height:auto !important}
+  #unlock-overlay > div{padding:22px 18px;max-width:calc(100vw - 32px)}
+  #sub-major,#sub-minor{font-size:.72rem;padding:8px}
+}
+@media (max-width:380px){
+  .wallet-address{font-size:.55rem}
+  .actions .action-btn{padding:10px;font-size:.75rem}
+  .conn-bar{font-size:.66rem}
+}
 </style>
 </head>
 <body>
@@ -687,47 +710,67 @@ document.addEventListener('DOMContentLoaded', async () => {
   MoneroRPC.onConnectionChange((state) => {
     connDot.className = 'conn-dot ' + state.status;
     if (state.status === 'connected') {
-      connInfo.innerHTML = `<span>${state.node}</span> · <span class="conn-height">${state.height?.toLocaleString()}</span>`;
+      connInfo.innerHTML = '<span>' + escapeHtml(state.node) + '</span> · <span class="conn-height">' + (state.height ? state.height.toLocaleString() : '—') + '</span>';
     } else if (state.status === 'connecting') {
-      connInfo.textContent = state.message || 'Connecting...';
+      connInfo.textContent = state.message || 'Connecting…';
     } else {
-      connInfo.textContent = state.message || 'Disconnected';
+      // Disconnected — surface a retry link inline so the user doesn't have
+      // to reload the whole page to recover from a transient proxy outage.
+      connInfo.innerHTML = '<span style="color:#f87171">' + escapeHtml(state.message || 'Disconnected') + '</span> · <a href="#" id="conn-retry" style="color:var(--xmr);text-decoration:underline;cursor:pointer">retry</a>';
+      const r = document.getElementById('conn-retry');
+      if (r) r.addEventListener('click', (e) => { e.preventDefault(); connectAndPopulate(); });
     }
   });
 
-  try {
-    const node = await MoneroRPC.connect();
-
-    // Show dashboard
-    document.getElementById('loading-state').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-
-    // Populate network info
-    document.getElementById('net-node').textContent = node.name;
-    document.getElementById('net-height').textContent = node.height?.toLocaleString() || '—';
-    document.getElementById('net-latency').textContent = node.latency + 'ms';
-    document.getElementById('net-pool').textContent = node.txPoolSize || '0';
-
-    // Get fee estimate
+  // Wraps the network connect + populate flow so it can be called both on
+  // initial load and from any in-page retry button without reloading.
+  async function connectAndPopulate () {
+    document.getElementById('loading-state').style.display = 'block';
+    document.getElementById('loading-state').innerHTML =
+      '<div class="spinner"></div><p>Connecting to Monero network…</p>';
     try {
-      const fee = await MoneroRPC.getFeeEstimate();
-      document.getElementById('net-fee').textContent = MoneroRPC.formatXMR(fee.feePerByte) + ' XMR/byte';
-    } catch(e) {
-      document.getElementById('net-fee').textContent = 'unavailable';
+      const node = await MoneroRPC.connect();
+
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+
+      document.getElementById('net-node').textContent     = node.name;
+      document.getElementById('net-height').textContent   = node.height ? node.height.toLocaleString() : '—';
+      document.getElementById('net-latency').textContent  = node.latency + 'ms';
+      document.getElementById('net-pool').textContent     = node.txPoolSize || '0';
+
+      try {
+        const fee = await MoneroRPC.getFeeEstimate();
+        document.getElementById('net-fee').textContent = MoneroRPC.formatXMR(fee.feePerByte) + ' XMR/byte';
+      } catch (e) {
+        document.getElementById('net-fee').textContent = 'unavailable';
+      }
+
+      document.getElementById('balance-xmr').textContent = '—';
+      document.getElementById('balance-note').textContent =
+        'Balance scanning requires a light-wallet server (coming soon)';
+    } catch (e) {
+      // Build a structured error block with two recovery options.
+      const ls = document.getElementById('loading-state');
+      ls.style.display = 'block';
+      ls.innerHTML =
+        '<div style="text-align:center;max-width:380px;margin:0 auto">' +
+          '<svg width="40" height="40" fill="none" stroke="#f87171" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+          '<p style="color:#f87171;font-size:.92rem;font-weight:600;margin-bottom:6px">Could not reach a Monero node</p>' +
+          '<p style="color:var(--text-dim);font-size:.78rem;line-height:1.55;margin-bottom:4px">' + escapeHtml(e.message) + '</p>' +
+          '<p style="color:var(--text-dim);font-size:.72rem;line-height:1.55;margin-bottom:18px">This usually means the proxy is rate-limited, the upstream nodes are temporarily down, or your network is blocking the request. Your wallet keys are unaffected.</p>' +
+          '<button id="err-retry" class="action-btn" style="padding:10px 22px;font-size:.82rem;width:auto;display:inline-flex;margin-right:8px">Retry</button>' +
+          '<button id="err-disconnect" class="action-btn" style="padding:10px 22px;font-size:.82rem;width:auto;display:inline-flex;background:transparent">Disconnect</button>' +
+        '</div>';
+      document.getElementById('err-retry').addEventListener('click', () => connectAndPopulate());
+      document.getElementById('err-disconnect').addEventListener('click', () => {
+        WalletVault.clear();
+        window.location.href = '/';
+      });
     }
-
-    // Balance note
-    document.getElementById('balance-xmr').textContent = '—';
-    document.getElementById('balance-note').textContent =
-      'Balance scanning requires a light wallet server (coming soon)';
-
-  } catch (e) {
-    document.getElementById('loading-state').innerHTML = `
-      <p style="color:var(--danger)">${e.message}</p>
-      <p style="color:var(--text-dim);font-size:.72rem;margin-top:8px">This usually means CORS or mixed-content blocking. Open browser console (F12) for details.</p>
-      <button onclick="location.reload()" style="margin-top:12px;padding:10px 24px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;cursor:pointer">Retry</button>
-    `;
   }
+
+  await connectAndPopulate();
 
   // ─── RECEIVE MODAL ───
   document.getElementById('btn-receive').addEventListener('click', () => {

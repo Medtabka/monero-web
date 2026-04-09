@@ -110,6 +110,20 @@ footer p{font-size:.7rem;color:var(--text-dim)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @media(min-width:520px){.container{max-width:520px}.card-header h1{font-size:1.7rem}}
+@media(max-width:520px){
+  .container{padding:0 16px}
+  .card{padding:18px}
+  .card-header{margin-bottom:18px}
+  .input-group textarea{min-height:90px;font-size:.74rem}
+  .input-group input,.input-group select{font-size:.74rem;padding:10px 12px}
+  .tabs{flex-wrap:wrap;gap:4px}
+  .tab{flex:1 1 calc(50% - 4px);font-size:.72rem;padding:8px 6px;text-align:center}
+  .btn-primary{padding:13px;font-size:.86rem}
+  .result-card{padding:12px}
+  .result-value{font-size:.62rem}
+  .security-notice{padding:10px 12px}
+  .security-notice p{font-size:.7rem}
+}
 </style>
 </head>
 <body>
