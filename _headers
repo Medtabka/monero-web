@@ -34,7 +34,15 @@
   # every git push lands in users' browsers on their next visit.
   Cache-Control: public, max-age=0, must-revalidate
 
-# ── Long-cache exceptions ───────────────────────────────────────────
+# ── Per-directory cache overrides ───────────────────────────────────
+# Cloudflare Pages applies its own default 4-hour browser cache to known
+# static asset types (.js, .css) and that default WINS over the catch-all
+# /* rule unless we explicitly target the directory. /js/* and /functions/*
+# both need their own block.
+
+/js/*
+  Cache-Control: public, max-age=0, must-revalidate
+
 # Fonts are filename-hashed in fonts/fonts.css so a content change ALWAYS
 # changes the URL. Safe to cache for a year and tell the browser it's
 # immutable (won't even ask for revalidation).
