@@ -16,8 +16,10 @@
 *{margin:0;padding:0;box-sizing:border-box}
 /* Stop the I-beam text caret from appearing on decorative UI when clicked.
    Inputs, textareas, derived keys and the recovered mnemonic stay selectable. */
-body{user-select:none;-webkit-user-select:none}
-input,textarea,.result-value,#res-mnemonic,#create-mnemonic,#create-spend,#create-view,#create-address{user-select:text;-webkit-user-select:text}
+body{user-select:none;-webkit-user-select:none;cursor:default}
+input,textarea{user-select:text;-webkit-user-select:text;cursor:text}
+.result-value,#res-mnemonic,#create-mnemonic,#create-spend,#create-view,#create-address{user-select:text;-webkit-user-select:text;cursor:text}
+button,a,.tab,.copy-btn{cursor:pointer}
 html{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;-webkit-font-smoothing:antialiased}
 body{min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden}
 
