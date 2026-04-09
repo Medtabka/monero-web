@@ -1,0 +1,9 @@
+# Cloudflare Pages already strips ".html" by default and serves the file at
+# the clean URL. We use the clean form everywhere internally.
+#
+# These rules ensure any visitor who hits the legacy .html path (old bookmarks,
+# inbound links from before the migration) gets a 301 to the canonical clean
+# URL — same content, no broken links, search engines update accordingly.
+/index.html      /              301
+/verify.html     /verify        301
+/dashboard.html  /dashboard     301
