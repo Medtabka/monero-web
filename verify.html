@@ -345,6 +345,22 @@ footer p{font-size:.7rem;color:var(--text-dim)}
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // If there's already a wallet session in this tab, surface a banner that
+  // jumps the user straight to the dashboard instead of forcing them to
+  // re-enter their seed. They can still derive a different wallet from this
+  // page if they want.
+  (function showActiveSessionBanner () {
+    if (!WalletVault.hasBlob()) return;
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:10px;padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap';
+    banner.innerHTML =
+      '<svg width="18" height="18" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+      '<span style="flex:1;font-size:.82rem;color:var(--text)">An active wallet session is loaded in this tab.</span>' +
+      '<a href="/dashboard" style="flex-shrink:0;background:#22c55e;color:#fff;text-decoration:none;font-size:.78rem;font-weight:600;padding:8px 16px;border-radius:8px">Continue →</a>';
+    const card = document.querySelector('.card');
+    if (card) card.insertBefore(banner, card.firstChild);
+  })();
+
   const formats = {
     12: { name:'BIP-39',          cls:'mymonero', icon:'◇' },
     13: { name:'MyMonero Legacy', cls:'mymonero', icon:'◈' },
