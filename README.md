@@ -1,5 +1,7 @@
 # monero-web
 
+![monero-web — non-custodial Monero wallet in your browser](assets/social-card.png)
+
 **Open-source, non-custodial Monero web wallet. Your keys never leave your browser.**
 
 Live at [monero-web.com](https://monero-web.com)

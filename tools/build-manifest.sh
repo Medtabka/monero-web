@@ -26,6 +26,8 @@ INCLUDED_PATTERNS=(
   "fonts/fonts.css"
   "fonts/*.woff2"
   "js/*.js"
+  "assets/*.svg"
+  "assets/*.png"
   "donation-qr.svg"
   "favicon.svg"
   "_redirects"
