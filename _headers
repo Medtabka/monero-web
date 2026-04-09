@@ -1,0 +1,25 @@
+# Cloudflare Pages security headers
+# Documentation: https://developers.cloudflare.com/pages/configuration/headers/
+#
+# These apply to every response served from monero-web.com.
+
+/*
+  # Content Security Policy — strict, no 'unsafe-inline' for scripts.
+  # Every script the browser executes must come from our own origin.
+  # Inline <script> blocks are forbidden; use external .js files.
+  #
+  # We still allow 'unsafe-inline' for STYLES because the codebase has many
+  # inline style="..." attributes (which would be a much larger refactor)
+  # and the attack surface is significantly smaller — CSS injection cannot
+  # exfiltrate keys the way JS injection can.
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+
+  # Standard hardening
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=()
+
+  # HSTS — tell browsers to only ever connect over HTTPS for the next 2 years.
+  # `preload` makes us eligible for the HSTS preload list (apply at hstspreload.org).
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
