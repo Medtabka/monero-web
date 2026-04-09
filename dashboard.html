@@ -242,10 +242,11 @@ footer p{font-size:.65rem;color:var(--text-dim)}
       <div class="keys-section fade-in">
         <div class="section-title">Subaddresses</div>
         <div class="key-card">
-          <div class="key-label" style="margin-bottom:8px">Generate a subaddress (account / index)</div>
+          <div class="key-label" style="margin-bottom:8px">Generate a labeled subaddress</div>
+          <input id="sub-label" type="text" placeholder="Label (optional, e.g. Donations)" maxlength="40" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.78rem;outline:none;margin-bottom:8px">
           <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:10px">
-            <input id="sub-major" type="number" min="0" value="0" placeholder="account" style="min-width:0;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem;outline:none">
-            <input id="sub-minor" type="number" min="1" value="1" placeholder="index" style="min-width:0;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem;outline:none">
+            <input id="sub-major" type="number" min="0" value="0" title="account index" placeholder="account" style="min-width:0;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem;outline:none">
+            <input id="sub-minor" type="number" min="1" value="1" title="address index (auto-fills)" placeholder="index" style="min-width:0;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem;outline:none">
             <button id="btn-sub-gen" class="action-btn" style="flex:0 0 auto;padding:8px 14px;font-size:.78rem;white-space:nowrap">Generate</button>
           </div>
           <div id="sub-error" style="display:none;color:#f87171;font-size:.72rem;margin-top:6px"></div>
@@ -487,6 +488,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('key-pub-spend').textContent = walletKeys.publicSpendKeyHex || '— not available (watch-only) —';
   document.getElementById('key-pub-view').textContent = walletKeys.publicViewKeyHex;
 
+  // ─── Wallet info badge (seed format + polyseed birthday) ───
+  // Polyseed encodes a wallet creation timestamp ("birthday") in 10 bits as
+  // 2-week buckets since 2021-11-01 UTC. Once balance scanning lands this is
+  // what we'll use as the restore-from height. For now we just surface it
+  // for the user.
+  (function showWalletInfo () {
+    const parts = [];
+    if (walletKeys.seedFormat === 'polyseed' && typeof walletKeys.birthday === 'number') {
+      const POLYSEED_EPOCH = Date.UTC(2021, 10, 1) / 1000; // 2021-11-01 UTC
+      const TIME_STEP = 14 * 24 * 3600;                    // 2 weeks
+      const ts = (POLYSEED_EPOCH + walletKeys.birthday * TIME_STEP) * 1000;
+      const d = new Date(ts);
+      const dateStr = d.toISOString().slice(0, 10);
+      parts.push('Polyseed · birthday ~' + dateStr);
+    } else if (walletKeys.seedFormat === 'bip39') {
+      parts.push('BIP-39');
+    }
+    if (parts.length === 0) return;
+    const info = document.createElement('div');
+    info.style.cssText = 'display:inline-block;margin:6px 0;padding:4px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:100px;font-size:.68rem;color:var(--text-mid);font-family:"JetBrains Mono",monospace';
+    info.textContent = parts.join(' · ');
+    document.querySelector('.wallet-header').appendChild(info);
+  })();
+
   // Watch-only: hide spend-key-dependent UI
   if (isWatchOnly) {
     const sendBtn = document.getElementById('btn-send');
@@ -507,31 +532,133 @@ document.addEventListener('DOMContentLoaded', async () => {
     privateViewKey: MoneroKeys.hexToBytes(walletKeys.privateViewKeyHex),
     publicSpendKey: MoneroKeys.hexToBytes(walletKeys.publicSpendKeyHex)
   };
-  const subList  = document.getElementById('sub-list');
-  const subError = document.getElementById('sub-error');
+  // ─── Subaddress book (persistent metadata + on-demand address derivation) ──
+  // We persist {major, minor, label, createdAt} per wallet in localStorage so
+  // the user's labeled subaddress book survives across sessions. The actual
+  // subaddress strings are NOT stored — they're recomputed from the keys
+  // every render. localStorage only ever holds index pairs and labels.
+  const subList   = document.getElementById('sub-list');
+  const subError  = document.getElementById('sub-error');
+  const subLabel  = document.getElementById('sub-label');
+  const subMajor  = document.getElementById('sub-major');
+  const subMinor  = document.getElementById('sub-minor');
+  const subBookKey = 'monero-web-subaddrs-' + walletKeys.address.slice(0, 12);
+
+  function loadSubBook () {
+    try {
+      const raw = localStorage.getItem(subBookKey);
+      if (!raw) return [];
+      const list = JSON.parse(raw);
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+  function saveSubBook (list) {
+    try { localStorage.setItem(subBookKey, JSON.stringify(list)); } catch (e) {}
+  }
+  function nextMinor (list, major) {
+    const used = list.filter(e => e.major === major).map(e => e.minor);
+    return used.length ? Math.max.apply(null, used) + 1 : 1;
+  }
+  function copyToClipboard (text, el) {
+    navigator.clipboard.writeText(text).then(() => {
+      if (el) {
+        const old = el.textContent;
+        el.textContent = 'Copied!';
+        setTimeout(() => { el.textContent = old; }, 1200);
+      }
+    });
+  }
+
+  function renderSubBook () {
+    const list = loadSubBook();
+    subList.innerHTML = '';
+    if (list.length === 0) {
+      subList.innerHTML = '<div style="font-size:.7rem;color:var(--text-dim);text-align:center;padding:14px 0">No subaddresses yet.</div>';
+    }
+    // newest first
+    list.slice().reverse().forEach((entry, displayIdx) => {
+      const realIdx = list.length - 1 - displayIdx;
+      let address = '— locked —';
+      try {
+        if (subKeys) address = MoneroSubaddress.generate(subKeys, entry.major, entry.minor).address;
+      } catch (e) { address = '(error)'; }
+
+      const row = document.createElement('div');
+      row.style.cssText = 'margin-top:10px;padding:12px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px';
+      row.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">' +
+          '<div style="font-size:.78rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+            (entry.label ? escapeHtml(entry.label) : '<span style="color:var(--text-dim);font-weight:400">unlabeled</span>') +
+          '</div>' +
+          '<div style="display:flex;gap:6px;flex-shrink:0">' +
+            '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.62rem;color:var(--text-dim);padding:2px 8px;background:var(--surface);border-radius:100px">' + entry.major + '/' + entry.minor + '</span>' +
+            '<button class="sub-del" data-idx="' + realIdx + '" title="Delete" style="background:transparent;border:0;color:var(--text-dim);cursor:pointer;font-size:.85rem;padding:0 4px;line-height:1">✕</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="sub-addr" style="font-family:\'JetBrains Mono\',monospace;font-size:.62rem;color:var(--text-mid);word-break:break-all;line-height:1.5;cursor:pointer" title="Click to copy">' +
+          escapeHtml(address) +
+        '</div>';
+      row.querySelector('.sub-addr').addEventListener('click', (e) => copyToClipboard(address, e.currentTarget));
+      row.querySelector('.sub-del').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(e.currentTarget.dataset.idx, 10);
+        const updated = loadSubBook();
+        updated.splice(idx, 1);
+        saveSubBook(updated);
+        renderSubBook();
+        autoFillNextMinor();
+      });
+      subList.appendChild(row);
+    });
+  }
+
+  function escapeHtml (s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  function autoFillNextMinor () {
+    const list = loadSubBook();
+    const major = parseInt(subMajor.value, 10) || 0;
+    subMinor.value = nextMinor(list, major);
+  }
+  subMajor.addEventListener('input', autoFillNextMinor);
+  autoFillNextMinor();
+
   document.getElementById('btn-sub-gen').addEventListener('click', () => {
     subError.style.display = 'none';
-    if (!subKeys) { subError.textContent = 'Watch-only wallets cannot generate subaddresses'; subError.style.display = 'block'; return; }
+    if (!subKeys) {
+      subError.textContent = 'Watch-only wallets cannot generate subaddresses (the spend key is required).';
+      subError.style.display = 'block';
+      return;
+    }
     try {
-      const major = parseInt(document.getElementById('sub-major').value, 10) || 0;
-      const minor = parseInt(document.getElementById('sub-minor').value, 10) || 0;
-      const sub = MoneroSubaddress.generate(subKeys, major, minor);
-      const row = document.createElement('div');
-      row.style.cssText = 'margin-top:10px;padding:10px 12px;background:var(--surface-2);border-radius:8px;font-family:"JetBrains Mono",monospace';
-      row.innerHTML =
-        '<div style="font-size:.65rem;color:var(--text-dim);margin-bottom:4px">' +
-        major + '/' + minor + '</div>' +
-        '<div style="font-size:.62rem;word-break:break-all;line-height:1.5;cursor:pointer" title="Click to copy">' +
-        sub.address + '</div>';
-      row.querySelector('div:last-child').addEventListener('click', () => {
-        navigator.clipboard.writeText(sub.address);
+      const major = parseInt(subMajor.value, 10) || 0;
+      const minor = parseInt(subMinor.value, 10) || 0;
+      if (major === 0 && minor === 0) throw new Error('Index (0,0) is your primary address — cannot be a subaddress');
+      // Validate by actually deriving
+      MoneroSubaddress.generate(subKeys, major, minor);
+      const list = loadSubBook();
+      // Don't allow exact duplicates of (major, minor)
+      if (list.some(e => e.major === major && e.minor === minor)) {
+        throw new Error('That (account, index) is already in your address book.');
+      }
+      list.push({
+        major,
+        minor,
+        label: (subLabel.value || '').trim(),
+        createdAt: new Date().toISOString(),
       });
-      subList.prepend(row);
+      saveSubBook(list);
+      subLabel.value = '';
+      renderSubBook();
+      autoFillNextMinor();
     } catch (e) {
       subError.textContent = e.message;
       subError.style.display = 'block';
     }
   });
+
+  renderSubBook();
 
   // ─── Copy address on click ───
   document.getElementById('wallet-address').addEventListener('click', () => {

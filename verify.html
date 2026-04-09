@@ -574,6 +574,8 @@ document.addEventListener('DOMContentLoaded', () => {
           publicSpendKeyHex:  k.publicSpendKeyHex,
           publicViewKeyHex:   k.publicViewKeyHex,
           watchOnly:          !!k.watchOnly,
+          seedFormat:         k.seedFormat || null,
+          birthday:           (typeof k.birthday === 'number') ? k.birthday : null,
         }, pw);
         window.location.href = '/dashboard';
       });
@@ -643,6 +645,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 privateViewKeyHex:  k.privateViewKeyHex,
                 publicSpendKeyHex:  k.publicSpendKeyHex,
                 publicViewKeyHex:   k.publicViewKeyHex,
+                seedFormat:         k.seedFormat || null,
+                birthday:           (typeof k.birthday === 'number') ? k.birthday : null,
               }, pw);
               window.location.href = '/dashboard';
             });
