@@ -39,6 +39,10 @@
   --success:#22c55e; --radius:14px; --radius-sm:10px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+/* Stop the I-beam text caret from appearing on decorative UI when clicked.
+   Re-enable selection for actual content people may want to copy. */
+body{user-select:none;-webkit-user-select:none}
+input,textarea,code,pre,.preview,.faq p,.faq summary{user-select:text;-webkit-user-select:text}
 html{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
 body{min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;line-height:1.6}
 a{color:inherit;text-decoration:none}

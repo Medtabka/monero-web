@@ -14,6 +14,10 @@
   --success:#22c55e; --danger:#ef4444; --warning:#f59e0b; --radius-sm:10px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+/* Stop the I-beam text caret from appearing on decorative UI when clicked.
+   Wallet address, keys, subaddresses and inputs stay copy-selectable. */
+body{user-select:none;-webkit-user-select:none}
+input,textarea,.wallet-address,.receive-address,.key-value,#sub-list,#sub-list *{user-select:text;-webkit-user-select:text}
 html{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;-webkit-font-smoothing:antialiased}
 body{min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden}
 .page{position:relative;z-index:2;flex:1;display:flex;flex-direction:column}
