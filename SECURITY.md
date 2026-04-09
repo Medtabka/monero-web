@@ -6,11 +6,13 @@ If you think you've found a security issue in monero-web, **please do not open
 a public GitHub issue**. Instead, report it privately so we can fix it before
 it's disclosed.
 
-**Preferred channels** (in order):
+**Preferred channel:** GitHub's private vulnerability reporting at
+<https://github.com/Medtabka/monero-web/security/advisories/new>
 
-1. GitHub's private vulnerability reporting:
-   <https://github.com/Medtabka/monero-web/security/advisories/new>
-2. Email: `security@monero-web.com` (PGP key fingerprint published on the site)
+This is the primary and recommended way to disclose anything sensitive. It
+gives us a private discussion thread, supports attachments, and ties cleanly
+into GitHub's security advisory + CVE workflow. You'll need a free GitHub
+account to file one.
 
 Please include:
 
