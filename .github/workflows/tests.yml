@@ -28,3 +28,40 @@ jobs:
             awk '/^<script>$/{f=1;next}/^<\/script>$/{f=0}f' "$f" > "/tmp/$f.js"
             node --check "/tmp/$f.js"
           done
+
+      - name: Verify MANIFEST.txt matches the source tree
+        run: |
+          set -e
+          ./tools/build-manifest.sh --check
+
+      - name: No external scripts, fonts, or stylesheets allowed
+        run: |
+          set -e
+          # monero-web's threat model relies on every byte the browser
+          # executes coming from our own origin. This step fails the build
+          # if anyone adds a <script src="https://...">, <link href="https://...">,
+          # @import url(https://...), or background-image referencing an
+          # external CDN to any of the HTML pages. The only exceptions are
+          # inert text references (canonical URLs, og:url, social meta tags).
+          violations=0
+          for f in *.html; do
+            if grep -nE '<script[^>]+src=["\047]https?://' "$f"; then
+              echo "::error file=$f::external <script src> not allowed"
+              violations=$((violations+1))
+            fi
+            if grep -nE '<link[^>]+href=["\047]https?://[^"\047]+\.(css|woff2?|ttf|otf)' "$f"; then
+              echo "::error file=$f::external stylesheet/font not allowed"
+              violations=$((violations+1))
+            fi
+            if grep -nE '@import\s+url\(["\047]?https?://' "$f"; then
+              echo "::error file=$f::CSS @import from external URL not allowed"
+              violations=$((violations+1))
+            fi
+          done
+          if [ "$violations" -gt 0 ]; then
+            echo ""
+            echo "Found $violations external-asset violation(s)."
+            echo "Self-host the resource under /js/, /fonts/, or /assets/ instead."
+            exit 1
+          fi
+          echo "OK — no external assets referenced from any HTML page."

@@ -111,6 +111,13 @@ This wallet is designed to keep your spend key out of any system you don't contr
 Below is what it does and does not protect against — please read this before
 trusting it with significant funds.
 
+**Invariant enforced by CI:** every byte the browser executes (HTML, JS, CSS,
+fonts, images, the QR encoder library) is served from `monero-web.com`. The
+build pipeline fails if any HTML file references an external CDN URL. There
+is no `<script src="https://cdn.example.com/...">` anywhere in the project,
+ever, by construction. This means there is no third-party JavaScript supply
+chain to compromise.
+
 **What monero-web protects against:**
 
 - **A compromised or malicious server.** All key derivation, all signing, and all
