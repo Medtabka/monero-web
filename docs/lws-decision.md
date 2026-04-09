@@ -117,10 +117,13 @@ wallet on a tight timeline.
    `docs/lws-api.md`.
 4. **Wire the dashboard's balance + history panels** to call
    `lws-client.js`. Until then they show `—`.
-5. **Vendor `mymonero-core-js`** under `js/mymonero-core/`. Validate
-   that it loads from a same-origin path under our strict CSP
-   (`script-src 'self'` is fine, the WASM blob is fetched as a
-   `application/wasm` file via `fetch()`).
+5. **Vendor `mymonero-core-js`** under `js/mymonero-core/`. **Done**
+   2026-04-09. The 5 source files are checked into the repo at
+   `js/mymonero-core/` along with the BSD-3-Clause `LICENSE.txt` and
+   a README explaining provenance, status, and the recommended
+   browser-compat path for whoever wires it up next. The files
+   ship to users via Cloudflare Pages but are not yet called from
+   the dashboard — that happens in step 6.
 6. **Write `js/send.js`** — the wrapper the Send button calls. Builds
    the tx via mymonero-core-js, signs it, broadcasts via the existing
    `/api/proxy` Cloudflare Function.

@@ -1,5 +1,5 @@
 # monero-web build manifest
-# Generated 2026-04-09T17:42:44Z from commit 969cd08
+# Generated 2026-04-09T17:51:42Z from commit 990b8b8
 #
 # Verify the live deployment matches a specific git tag with:
 #   git checkout v0.1.0
@@ -39,6 +39,13 @@ c12981f69fb709985eb27ff814a1e0c9258462426ef3873ab3551c16acc5b449  js/monero-rpc.
 36726c9b7d217caf379bc5d69c43480ffd90490ca2477ed51807544308d56426  js/monero-subaddress.js
 9a0792500d640b96faf138f867576179ab259ff4122e9e309a7a996877fde406  js/monero-wordlist.js
 14eaa392557c1ec8501eef6fa6c568f1adf341a0b745236c114799acaea80e91  js/monero-wordlists-all.js
+c7c911457cac352c3d79c43cde1dc26a2c0355234e737060cac7a786647ac87f  js/mymonero-core/LICENSE.txt
+35ad453993e1645e7c53fd5afce6800ed8dd1e81084bbaac235ecae06ceadae2  js/mymonero-core/MyMoneroCoreBridgeClass.js
+3ec81300ac7c4ce52c47144e99460064c820a36b782a3df683e32df7e39f0a9b  js/mymonero-core/MyMoneroCoreBridgeEssentialsClass.js
+c8889ee4b0e8f9754d8b283edd36fc0012d52db5244278ad71fc341b8d8316ca  js/mymonero-core/MyMoneroCoreBridge.js
+cee586c946cb838f590db096c8f3d89e58a9c0ec81393f421cfed0fadf3a6c06  js/mymonero-core/MyMoneroCoreCpp_WASM.js
+bf22b13d1187c01fe962b65098e47c9fbd29555eef224e91adeaf30c3d4fc155  js/mymonero-core/MyMoneroCoreCpp_WASM.wasm
+3e30e3f371cf1669f8c114ba0b9440657ed6486b7d47bfefb9d5d05fa28842b2  js/mymonero-core/README.md
 1fea789d0d94133b6e12ef50408a13bf66d1d4298eb0ab2411d79400b5a3999e  js/polyseed.js
 5f5e2c80f5ba8b2b68d771fc44da7b5fd4a3e256526f78f985644f99e0df84c4  js/qrcodegen.js
 4695ae6ccba75eb2775e6eadab605cad283256ba1866fe78f458baf65b5a5f85  js/qr-scanner.js

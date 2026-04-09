@@ -8,11 +8,17 @@
   # Every script the browser executes must come from our own origin.
   # Inline <script> blocks are forbidden; use external .js files.
   #
+  # 'wasm-unsafe-eval' is needed for the vendored mymonero-core WebAssembly
+  # module that builds and signs Monero transactions client-side. Despite
+  # the scary name it does NOT permit eval() of arbitrary JavaScript — only
+  # WebAssembly compilation. The 'unsafe-eval' / 'unsafe-inline' source
+  # expressions remain forbidden. WASM modules still must come from 'self'.
+  #
   # We still allow 'unsafe-inline' for STYLES because the codebase has many
   # inline style="..." attributes (which would be a much larger refactor)
   # and the attack surface is significantly smaller — CSS injection cannot
   # exfiltrate keys the way JS injection can.
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
 
   # Standard hardening
   X-Content-Type-Options: nosniff
