@@ -26,23 +26,30 @@ const MoneroWordList = (function () {
     if (words.length !== 1626) {
       throw new Error(`Word list must have exactly 1626 entries, got ${words.length}`);
     }
-    const map = {};
+    const map = {};       // prefix → first index (used by checksum logic)
+    const fullMap = {};   // full lowercased word → index (exact lookup)
     for (let i = 0; i < words.length; i++) {
-      const key = words[i].substring(0, prefixLen).toLowerCase();
+      const w = words[i].toLowerCase();
+      const key = w.substring(0, prefixLen);
       if (map[key] !== undefined && !(flags & ALLOW_DUPLICATE_PREFIXES)) {
         throw new Error(`Duplicate prefix "${key}" at index ${i}`);
       }
-      if (map[key] === undefined) {
-        map[key] = i;
-      }
+      if (map[key] === undefined) map[key] = i;
+      fullMap[w] = i;
     }
-    lists[lang] = { words, prefixLen, map };
+    lists[lang] = { words, prefixLen, map, fullMap, flags };
   }
 
   function lookup(lang, word) {
     const list = lists[lang];
     if (!list) throw new Error(`Word list not loaded: ${lang}`);
-    const prefix = word.toLowerCase().trim().substring(0, list.prefixLen);
+    const w = word.toLowerCase().trim();
+    // Always try full-word match first — this is the only correct lookup
+    // when the wordlist has duplicate prefixes (legacy English).
+    if (list.fullMap[w] !== undefined) return list.fullMap[w];
+    // Fall back to prefix-truncated lookup for users who entered the
+    // shortened prefix form of a word (allowed by Monero CLI).
+    const prefix = w.substring(0, list.prefixLen);
     const idx = list.map[prefix];
     return idx !== undefined ? idx : -1;
   }
@@ -111,7 +118,12 @@ const MoneroWordList = (function () {
   function appendChecksum(lang, dataWords) {
     const list = lists[lang];
     if (!list) throw new Error(`Word list not loaded: ${lang}`);
-    const prefixStr = dataWords.map(w => w.substring(0, list.prefixLen)).join('');
+    // Must match verifyChecksum's case handling — lowercase before hashing.
+    // Capitalised wordlists (German etc.) would otherwise compute different
+    // CRCs at encode and verify time.
+    const prefixStr = dataWords.map(w =>
+      w.toLowerCase().trim().substring(0, list.prefixLen)
+    ).join('');
     const checksumIdx = crc32(prefixStr) % dataWords.length;
     return [...dataWords, dataWords[checksumIdx]];
   }
