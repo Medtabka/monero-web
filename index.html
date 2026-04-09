@@ -193,6 +193,7 @@ footer{padding:48px 0 32px;border-top:1px solid var(--border);margin-top:64px;co
           <a href="#features">Features</a>
           <a href="#how">How it works</a>
           <a href="#faq">FAQ</a>
+          <a href="#donate">Donate</a>
           <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
           <a href="/verify.html" class="cta">Open Wallet →</a>
         </div>
@@ -398,6 +399,49 @@ footer{padding:48px 0 32px;border-top:1px solid var(--border);margin-top:64px;co
     </div>
   </section>
 
+  <!-- ─── DONATE ─── -->
+  <section id="donate">
+    <div class="container">
+      <span class="section-eyebrow">Donate</span>
+      <h2 class="section-title">Keep monero-web free.</h2>
+      <p class="section-sub">There's no token, no premium tier, no ads, and no plan to add any. If the wallet is useful to you, an XMR donation goes directly toward server costs, audits, and the work to ship balance scanning and send.</p>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:760px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <svg width="20" height="20" viewBox="0 0 256 256"><circle cx="128" cy="128" r="128" fill="#ff6600"/><path d="M63.5 178.2V105.7l64.5 64.5 64.5-64.5v72.5h29.8v-99.9c0-6.7-5.4-12.1-12.1-12.1-3.2 0-6.3 1.3-8.6 3.5L128 143.3 54.4 69.7c-2.3-2.3-5.3-3.5-8.6-3.5-6.7 0-12.1 5.4-12.1 12.1v99.9h29.8z" fill="#fff"/></svg>
+          <span style="font-size:.78rem;color:var(--text-mid);text-transform:uppercase;letter-spacing:.06em;font-weight:600">XMR address</span>
+        </div>
+        <div id="donate-addr" style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text);word-break:break-all;line-height:1.7;padding:14px 16px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;cursor:pointer;user-select:text;-webkit-user-select:text" title="Click to copy">47RzzwG62wBc5zDLm3M3xGUJAw7AY6vnW4hSHqo1jyJF1UsHCv56pPLgw4LAGwgfEe5RrR9SwaatBXtr77ZMW7sgTVZeRCz</div>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button id="donate-copy" class="btn btn-ghost" style="padding:10px 18px;font-size:.82rem">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy address
+          </button>
+          <a class="btn btn-ghost" href="monero:47RzzwG62wBc5zDLm3M3xGUJAw7AY6vnW4hSHqo1jyJF1UsHCv56pPLgw4LAGwgfEe5RrR9SwaatBXtr77ZMW7sgTVZeRCz" style="padding:10px 18px;font-size:.82rem">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+            Open in wallet
+          </a>
+        </div>
+        <div id="donate-toast" style="display:none;margin-top:10px;font-size:.75rem;color:var(--success)">Address copied to clipboard.</div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      var addrEl  = document.getElementById('donate-addr');
+      var copyBtn = document.getElementById('donate-copy');
+      var toast   = document.getElementById('donate-toast');
+      function copyAddr () {
+        navigator.clipboard.writeText(addrEl.textContent.trim()).then(function () {
+          toast.style.display = 'block';
+          setTimeout(function () { toast.style.display = 'none'; }, 2000);
+        });
+      }
+      addrEl.addEventListener('click', copyAddr);
+      copyBtn.addEventListener('click', copyAddr);
+    })();
+  </script>
+
   <!-- ─── FINAL CTA ─── -->
   <section>
     <div class="container">
@@ -419,6 +463,7 @@ footer{padding:48px 0 32px;border-top:1px solid var(--border);margin-top:64px;co
         <a href="#formats">Seed formats</a>
         <a href="#how">How it works</a>
         <a href="#faq">FAQ</a>
+        <a href="#donate">Donate</a>
         <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
       </div>
       <div class="footer-meta">monero-web.com · MIT licensed · Not affiliated with The Monero Project · XMR is property of its respective community</div>

@@ -193,6 +193,10 @@ MIT
 
 ## Donate
 
-If you find this useful, donations are welcome:
+monero-web is free, MIT-licensed, and has no token, no premium tier, and no
+ads. If you find it useful, XMR donations are very appreciated and go directly
+to keeping the project alive:
 
-`[YOUR_MONERO_ADDRESS]`
+```
+47RzzwG62wBc5zDLm3M3xGUJAw7AY6vnW4hSHqo1jyJF1UsHCv56pPLgw4LAGwgfEe5RrR9SwaatBXtr77ZMW7sgTVZeRCz
+```
