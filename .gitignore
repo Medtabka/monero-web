@@ -1,8 +1,9 @@
-# OS / editor cruft
+# OS / editor / tooling cruft
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+.claude/
 *.swp
 *~
 
