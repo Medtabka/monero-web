@@ -19,8 +19,16 @@
 const MoneroRPC = (function () {
   'use strict';
 
-  // Use our own Netlify proxy to avoid CORS/mixed-content issues
-  const PROXY_URL = '/.netlify/functions/node-proxy';
+  // Same-origin RPC proxy. Both Cloudflare Pages Functions and Netlify
+  // Functions are wired up:
+  //   • Cloudflare:  functions/api/proxy.js → /api/proxy
+  //   • Netlify:     netlify/functions/node-proxy.js → /.netlify/functions/node-proxy
+  // We pick one based on the deployment host so the same JS works on either.
+  // (Cloudflare is the primary; Netlify is kept as a fallback for now.)
+  const PROXY_URL = (typeof location !== 'undefined' &&
+                     /\.netlify\.(app|com)$/i.test(location.hostname))
+    ? '/.netlify/functions/node-proxy'
+    : '/api/proxy';
   // localStorage key for an optional user-supplied direct node URL
   // (e.g. "https://my-node.example:18089"). When set, the proxy is bypassed
   // and requests go straight to that node — the node must serve CORS headers
