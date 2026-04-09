@@ -13,11 +13,53 @@
 // `?path=/get_outs`, `/get_transactions`, `/send_raw_transaction` for the
 // non-JSON-RPC paths.
 
-const NODES = [
+// Our own monero node, served by Cloudflare in front of nginx in front of
+// monerod on a Hetzner CAX21. We prefer this over the public fallbacks
+// whenever it's actually synced — see ourNodeIsSynced() below.
+const OWN_NODE = 'https://node.monero-web.com';
+
+// Public fallback nodes. Used while OWN_NODE is still syncing or offline.
+const PUBLIC_NODES = [
   'http://xmr-node.cakewallet.com:18081',
   'http://node.monerodevs.org:18089',
   'http://xmr.triplebit.org:18081',
 ];
+
+// Per-isolate cache of OWN_NODE's sync status. Cloudflare Pages Functions
+// reuse module-level state across invocations within a single isolate, so
+// this caches the answer for ~60s and avoids hammering OWN_NODE on every
+// request. When the isolate is recycled the cache resets — that's fine.
+let syncCheck = { ts: 0, ok: false };
+const SYNC_TTL_MS = 60_000;
+
+async function ourNodeIsSynced () {
+  const now = Date.now();
+  if (now - syncCheck.ts < SYNC_TTL_MS) return syncCheck.ok;
+  syncCheck.ts = now;
+  syncCheck.ok = false;
+  try {
+    const r = await fetch(OWN_NODE + '/json_rpc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: '0', method: 'get_info' }),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (r.ok) {
+      const d = await r.json();
+      // Treat the node as ready iff it explicitly reports synchronized=true.
+      // While monerod is still catching up this is false, and we keep
+      // serving from the public fallbacks.
+      syncCheck.ok = d && d.result && d.result.synchronized === true;
+    }
+  } catch (e) { /* swallow — falls back to public nodes */ }
+  return syncCheck.ok;
+}
+
+async function chooseNodes () {
+  return (await ourNodeIsSynced())
+    ? [OWN_NODE, ...PUBLIC_NODES]
+    : [...PUBLIC_NODES];
+}
 
 const ALLOWED_JSON_RPC_METHODS = new Set([
   'get_info',
@@ -72,7 +114,8 @@ export async function onRequestPost(context) {
   const serialized = JSON.stringify(body);
   let lastError = null;
 
-  for (const node of NODES) {
+  const nodes = await chooseNodes();
+  for (const node of nodes) {
     try {
       const upstream = await fetch(node + path, {
         method: 'POST',

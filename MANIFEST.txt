@@ -1,5 +1,5 @@
 # monero-web build manifest
-# Generated 2026-04-09T12:47:36Z from commit b0d49be
+# Generated 2026-04-09T14:28:26Z from commit c145d61
 #
 # Verify the live deployment matches a specific git tag with:
 #   git checkout v0.1.0
