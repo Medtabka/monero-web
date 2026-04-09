@@ -356,6 +356,7 @@ footer p{font-size:.65rem;color:var(--text-dim)}
 <script src="js/monero-wordlist.js"></script>
 <script src="js/monero-keys.js"></script>
 <script src="js/monero-subaddress.js"></script>
+<script src="js/qrcodegen.js"></script>
 <script src="js/wallet-vault.js"></script>
 <script src="js/monero-english-wordlist.js"></script>
 <script src="js/monero-rpc.js"></script>
@@ -642,11 +643,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ─── QR CODE GENERATOR (simple version using canvas→dataURL) ───
   function generateQR(text) {
+    // Render the QR code locally with the vendored qrcodegen.js encoder.
+    // Nothing about the user's address ever leaves the browser — no third
+    // party (qrserver, googleapis, etc.) is contacted.
     const qrContainer = document.getElementById('qr-code');
-    // Use a public QR API as fallback — works without any library
-    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' +
-      encodeURIComponent('monero:' + text) + '&bgcolor=111113&color=eae8e4&format=svg';
-    qrContainer.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:220px;height:220px;border-radius:12px">';
+    try {
+      // typeNumber=0 → auto-pick the smallest version that fits, EC level "M"
+      const qr = qrcode(0, 'M');
+      qr.addData('monero:' + text);
+      qr.make();
+      const count = qr.getModuleCount();
+      const size  = 220;       // pixel size of the rendered SVG
+      const quiet = 2;         // quiet-zone modules around the code
+      const total = count + quiet * 2;
+      const cell  = size / total;
+
+      let rects = '';
+      for (let r = 0; r < count; r++) {
+        for (let c = 0; c < count; c++) {
+          if (qr.isDark(r, c)) {
+            rects += '<rect x="' + ((c + quiet) * cell).toFixed(2) +
+                     '" y="' + ((r + quiet) * cell).toFixed(2) +
+                     '" width="' + cell.toFixed(2) +
+                     '" height="' + cell.toFixed(2) + '" fill="#eae8e4"/>';
+          }
+        }
+      }
+      qrContainer.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size +
+        '" viewBox="0 0 ' + size + ' ' + size + '" shape-rendering="crispEdges" ' +
+        'style="background:#111113;border-radius:12px">' + rects + '</svg>';
+    } catch (e) {
+      qrContainer.innerHTML = '<div style="color:#f87171;font-size:.75rem;padding:20px">QR error: ' + e.message + '</div>';
+    }
   }
 
   // ─── Disconnect ───
