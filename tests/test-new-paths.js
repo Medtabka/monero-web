@@ -244,6 +244,38 @@ function assertEq(actual, expected, msg) {
     assert(threw, 'wrong password should throw');
   });
 
+  // ── Mnemonic language auto-detection ───────────────────────────────
+  // Regression test for the bug where a user picked the wrong language
+  // in the dropdown and got "Invalid checksum word" because lookup()
+  // returned random matches via prefix collisions across wordlists.
+  await test('Italian seed + lang=english → auto-detected as italian', () => {
+    const w = MoneroKeys.generateWallet('italian', 'mainnet');
+    const k = MoneroKeys.deriveFromMnemonic(w.mnemonic, 'english', 'mainnet');
+    assertEq(k.address, w.address, 'auto-detect should pick italian');
+  });
+  await test('Spanish seed + lang=french → auto-detected as spanish', () => {
+    const w = MoneroKeys.generateWallet('spanish', 'mainnet');
+    const k = MoneroKeys.deriveFromMnemonic(w.mnemonic, 'french', 'mainnet');
+    assertEq(k.address, w.address, 'auto-detect should pick spanish');
+  });
+  await test('25-word seed with no language hint → auto-detects', () => {
+    const w = MoneroKeys.generateWallet('german', 'mainnet');
+    const k = MoneroKeys.deriveFromMnemonic(w.mnemonic, null, 'mainnet');
+    assertEq(k.address, w.address);
+  });
+  await test('Garbage 25-word input → friendly error, not silent corruption', () => {
+    let threw = false, msg = '';
+    try {
+      MoneroKeys.deriveFromMnemonic(
+        'one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twentyone twentytwo twentythree twentyfour twentyfive',
+        null, 'mainnet'
+      );
+    } catch (e) { threw = true; msg = e.message; }
+    assert(threw, 'should throw on bogus input');
+    assert(/wordlist/i.test(msg) || /checksum/i.test(msg) || /unknown/i.test(msg),
+      'error message should mention wordlist/checksum/unknown — got: ' + msg);
+  });
+
   // ── LwsClient (mock-mode behaviour) ────────────────────────────────
   await test('LwsClient.formatXmr — atomic units → human XMR', () => {
     assertEq(LwsClient.formatXmr('1000000000000'), '1');

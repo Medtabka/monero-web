@@ -63,16 +63,55 @@ const MoneroKeys = (function () {
   }
 
   /**
-   * Derive keys from a mnemonic seed phrase
-   *
-   * @param {string} mnemonic - Space-separated words
-   * @param {string} lang - Word list language (default: 'english')
-   * @param {string} network - 'mainnet'|'testnet'|'stagenet'
-   * @returns {Object}
+   * Try every loaded wordlist and return the language whose checksum
+   * verifies for the given mnemonic, or null if none does. Used to
+   * auto-detect the language when the user doesn't pick one (or picks
+   * the wrong one). For 25-word and 13-word seeds the checksum is
+   * unique to the right wordlist, so this is reliable.
    */
+  function detectLanguage(words) {
+    if (!Array.isArray(words) || (words.length !== 25 && words.length !== 13)) {
+      return null;
+    }
+    if (typeof MoneroWordList === 'undefined') return null;
+    const candidates = [
+      'english','spanish','french','german','italian','portuguese',
+      'russian','japanese','chinese_simplified','dutch','esperanto',
+      'lojban','english_old',
+    ];
+    for (const lang of candidates) {
+      if (!MoneroWordList.isLoaded(lang)) continue;
+      try {
+        // Every word must be in the wordlist AND the checksum must verify.
+        let allKnown = true;
+        for (const w of words) {
+          if (MoneroWordList.lookup(lang, w) < 0) { allKnown = false; break; }
+        }
+        if (!allKnown) continue;
+        if (MoneroWordList.verifyChecksum(lang, words)) return lang;
+      } catch (e) { /* try next language */ }
+    }
+    return null;
+  }
+
   function deriveFromMnemonic(mnemonic, lang, network) {
-    lang = lang || 'english';
     network = network || 'mainnet';
+
+    const words = mnemonic.trim().toLowerCase().split(/\s+/);
+    const count = words.length;
+
+    // Auto-detect the language if possible. This protects users from picking
+    // the wrong language in the dropdown and getting a confusing "invalid
+    // checksum word" error when really the seed is in a different language.
+    if ((count === 25 || count === 13)) {
+      const detected = detectLanguage(words);
+      if (detected) {
+        lang = detected;
+      } else if (!lang) {
+        lang = 'english';
+      }
+    }
+    lang = lang || 'english';
 
     if (!MoneroWordList.isLoaded(lang)) {
       throw new Error(
@@ -80,22 +119,27 @@ const MoneroKeys = (function () {
         `Call MoneroWordList.register('${lang}', words, prefixLen) first.`
       );
     }
-
-    const words = mnemonic.trim().toLowerCase().split(/\s+/);
-    const count = words.length;
     let seed;
 
     if (count === 25) {
       // Standard Monero: 24 data + 1 checksum → 32-byte seed
       if (!MoneroWordList.verifyChecksum(lang, words)) {
-        throw new Error('Invalid checksum word');
+        throw new Error(
+          'Invalid mnemonic — checksum did not verify against any of the ' +
+          '13 supported wordlists. Double-check that you copied every word ' +
+          'correctly and that the order is right.'
+        );
       }
       seed = MoneroWordList.decodeWords(lang, words.slice(0, 24));
 
     } else if (count === 13) {
       // MyMonero: 12 data + 1 checksum → 16-byte partial → Keccak → 32 bytes
       if (!MoneroWordList.verifyChecksum(lang, words)) {
-        throw new Error('Invalid checksum word');
+        throw new Error(
+          'Invalid mnemonic — checksum did not verify against any of the ' +
+          '13 supported wordlists. Double-check that you copied every word ' +
+          'correctly and that the order is right.'
+        );
       }
       const partial = MoneroWordList.decodeWords(lang, words.slice(0, 12));
       seed = Keccak256.hash(partial);
