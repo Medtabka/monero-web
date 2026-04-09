@@ -137,10 +137,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(async () => {
       try {
         const mnemonic = seedInput.value.trim();
-        const lang = document.getElementById('seed-lang').value;
+        // Language is auto-detected by MoneroKeys.detectLanguage(); we pass
+        // null so the engine picks whichever wordlist actually matches.
         const network = document.getElementById('network-select').value;
         const passphrase = document.getElementById('bip39-pass').value;
-        const keys = await MoneroKeys.deriveFromAnyMnemonic(mnemonic, lang, network, passphrase);
+        const keys = await MoneroKeys.deriveFromAnyMnemonic(mnemonic, null, network, passphrase);
         showResults(keys);
       } catch(e) {
         errorEl.textContent = 'Error: ' + e.message;
