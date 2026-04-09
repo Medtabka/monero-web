@@ -80,7 +80,7 @@ It **cannot** see your private keys, seed phrase, or wallet balance.
 Clone this repo and deploy to any static hosting:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/monero-web.git
+git clone https://github.com/Medtabka/monero-web.git
 cd monero-web
 # Deploy to Netlify, Vercel, or any static host
 # For the RPC proxy, you need Netlify Functions or your own backend

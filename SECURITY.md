@@ -9,7 +9,7 @@ it's disclosed.
 **Preferred channels** (in order):
 
 1. GitHub's private vulnerability reporting:
-   <https://github.com/YOUR_USERNAME/monero-web/security/advisories/new>
+   <https://github.com/Medtabka/monero-web/security/advisories/new>
 2. Email: `security@monero-web.com` (PGP key fingerprint published on the site)
 
 Please include:
