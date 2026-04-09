@@ -14,6 +14,12 @@ gives us a private discussion thread, supports attachments, and ties cleanly
 into GitHub's security advisory + CVE workflow. You'll need a free GitHub
 account to file one.
 
+**Alternative:** if you'd rather not use GitHub, email
+[`security@monero-web.com`](mailto:security@monero-web.com). The address
+forwards to a private inbox and is read by the maintainer. If you have
+something especially sensitive and want PGP, ask for a key in your first
+message and we'll set one up.
+
 Please include:
 
 - A clear description of the issue
