@@ -1,0 +1,30 @@
+name: tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  crypto-engine:
+    name: crypto engine vectors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run new code-path test vectors
+        run: node tests/test-new-paths.js
+
+      - name: Lint inline scripts (syntax check only)
+        run: |
+          set -e
+          for f in verify.html dashboard.html; do
+            awk '/^<script>$/{f=1;next}/^<\/script>$/{f=0}f' "$f" > "/tmp/$f.js"
+            node --check "/tmp/$f.js"
+          done

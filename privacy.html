@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy — Monero Web</title>
+<meta name="description" content="monero-web.com privacy statement: we collect nothing, store nothing, see nothing.">
+<link rel="canonical" href="https://monero-web.com/privacy">
+<meta name="robots" content="index, follow">
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='128' cy='128' r='128' fill='%23ff6600'/%3E%3Cpath d='M63.5 178.2V105.7l64.5 64.5 64.5-64.5v72.5h29.8v-99.9c0-6.7-5.4-12.1-12.1-12.1-3.2 0-6.3 1.3-8.6 3.5L128 143.3 54.4 69.7c-2.3-2.3-5.3-3.5-8.6-3.5-6.7 0-12.1 5.4-12.1 12.1v99.9h29.8z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+<style>
+:root {
+  --bg:#0a0a0a; --surface:#111113; --surface-2:#17171b; --border:rgba(255,255,255,0.06);
+  --text:#eae8e4; --text-mid:#9a9894; --text-dim:#6e6c6a;
+  --xmr:#ff6600; --xmr-dim:rgba(255,102,0,0.12); --xmr-glow:rgba(255,102,0,0.25);
+  --success:#22c55e; --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{user-select:none;-webkit-user-select:none;cursor:default;background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
+p,li,h1,h2,h3{user-select:text;-webkit-user-select:text;cursor:text}
+a{color:var(--xmr);text-decoration:none;border-bottom:1px solid rgba(255,102,0,0.3);cursor:pointer}
+a:hover{border-bottom-color:var(--xmr)}
+button,.btn,nav a{cursor:pointer}
+
+.ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(120px);opacity:.25}
+.orb-1{width:520px;height:520px;background:#ff6600;top:-180px;right:-160px}
+.orb-2{width:480px;height:480px;background:#7c2d00;bottom:-200px;left:-160px;opacity:.18}
+
+.container{width:100%;max-width:760px;margin:0 auto;padding:0 24px;position:relative;z-index:2}
+
+nav{padding:20px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;border:0}
+.logo svg{width:30px;height:30px}
+.logo-text{font-size:1.05rem;font-weight:700;letter-spacing:-0.02em}
+.logo-text span{color:var(--xmr)}
+.nav-links{display:flex;gap:6px}
+.nav-links a{color:var(--text-mid);font-size:.82rem;font-weight:500;padding:8px 14px;border:0;border-radius:100px;transition:all .25s;text-decoration:none}
+.nav-links a:hover{color:var(--text);background:var(--surface-2)}
+
+main{flex:1;padding:64px 0 96px}
+h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-bottom:24px}
+.lead{font-size:1.1rem;color:var(--text-mid);margin-bottom:48px}
+h2{font-size:1.4rem;font-weight:700;letter-spacing:-0.02em;margin:36px 0 12px;color:var(--text)}
+p{margin-bottom:14px;color:var(--text-mid)}
+ul{padding-left:22px;margin-bottom:14px;color:var(--text-mid)}
+li{margin-bottom:8px}
+.callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--xmr);border-radius:10px;padding:18px 22px;margin:24px 0;color:var(--text)}
+.callout strong{color:var(--xmr)}
+
+footer{padding:32px 0;border-top:1px solid var(--border);color:var(--text-dim);font-size:.78rem;text-align:center}
+footer a{color:var(--text-mid);border:0}
+footer a:hover{color:var(--text)}
+.footer-row{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<div class="ambient"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
+
+<header>
+  <div class="container">
+    <nav>
+      <a href="/" class="logo" title="Back to home">
+        <svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="128" fill="#ff6600"/><path d="M63.5 178.2V105.7l64.5 64.5 64.5-64.5v72.5h29.8v-99.9c0-6.7-5.4-12.1-12.1-12.1-3.2 0-6.3 1.3-8.6 3.5L128 143.3 54.4 69.7c-2.3-2.3-5.3-3.5-8.6-3.5-6.7 0-12.1 5.4-12.1 12.1v99.9h29.8z" fill="#fff"/></svg>
+        <div class="logo-text">monero<span>web</span></div>
+      </a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/verify">Open Wallet</a>
+        <a href="https://github.com/Medtabka/monero-web" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <h1>Privacy</h1>
+    <p class="lead">monero-web is a non-custodial wallet. We do not collect, store, or transmit anything that could be used to identify you, recover your funds, or link you to your Monero activity.</p>
+
+    <div class="callout">
+      <strong>The short version:</strong> we have no servers that hold your data, no analytics, no cookies, no trackers, no email signup, no account, no logs we can hand over to anyone — because none of that exists.
+    </div>
+
+    <h2>What we do not collect</h2>
+    <ul>
+      <li><strong>Your seed phrase</strong> — never transmitted, never logged, never leaves your browser tab. All key derivation runs locally inside your tab using JavaScript that you can read in DevTools.</li>
+      <li><strong>Your private spend key, view key, or address</strong> — derived in your browser from your seed and used only inside your tab.</li>
+      <li><strong>Your wallet balance, transaction history, or contacts</strong> — these are not currently scanned at all (the wallet only does receive flows today). When balance scanning is added, it will be opt-in and route through infrastructure we explicitly document.</li>
+      <li><strong>Cookies, fingerprints, or analytics IDs</strong> — there are no third-party scripts or cookies on this site at all. Open DevTools → Application → Cookies on any page and the list is empty.</li>
+      <li><strong>Email addresses</strong> — there is no signup, no newsletter, no waitlist.</li>
+      <li><strong>IP addresses</strong> — Cloudflare (our CDN) sees the IP that requests each page, like every web host on the planet does, but we have no logging on top of that and never inspect Cloudflare's analytics for individual visitors.</li>
+    </ul>
+
+    <h2>What the wallet does send over the network</h2>
+    <p>The dashboard makes a small number of read-only RPC calls to public Monero remote nodes through a same-origin proxy at <code>/api/proxy</code>. Specifically:</p>
+    <ul>
+      <li><code>get_info</code> and <code>get_block_count</code> — to show the current network height and connection state.</li>
+      <li><code>get_fee_estimate</code> — to show the current recommended fee.</li>
+    </ul>
+    <p>None of these calls include your address, your view key, or any other information that could identify you or your wallet. The proxy forwards them to one of three public Monero remote nodes (Cake Wallet, MoneroDevs, Triplebit) and returns the response. No request is logged on our side.</p>
+    <p>You can also configure a <strong>custom node URL</strong> in the dashboard settings. When set, RPC calls go directly to your own node instead of through our proxy — if you run your own <code>monerod</code>, monero-web sees zero network traffic of yours at all.</p>
+
+    <h2>What Cloudflare can see</h2>
+    <p>monero-web.com is hosted on Cloudflare Pages and sits behind Cloudflare's CDN. As with any CDN, Cloudflare's edge servers see:</p>
+    <ul>
+      <li>The HTTP requests for the static files (HTML, JS, fonts, images)</li>
+      <li>The HTTP requests for the proxy endpoint (the JSON-RPC payloads going to public Monero nodes)</li>
+      <li>Visitor IP addresses and standard request metadata</li>
+    </ul>
+    <p>None of the information that flows through Cloudflare contains your seed, your keys, or your wallet contents. It is exactly the same set of information any visit to any website on the public internet exposes.</p>
+    <p>If your threat model requires hiding even the fact that you visited monero-web.com, route your browser through Tor Browser. The site works fine over Tor — there are no captchas, no JavaScript that breaks under Tor, and no server-side checks that block .onion-style traffic.</p>
+
+    <h2>Sessions and storage</h2>
+    <p>When you derive a wallet, the resulting keys are stored in your browser's <code>sessionStorage</code> — which means they live only in the current tab and are wiped automatically when you close it. You can also set an optional <strong>session password</strong>; if you do, your keys are AES-GCM encrypted in <code>sessionStorage</code> using a key derived from that password (PBKDF2-SHA256, 250 000 iterations) and decrypted only on demand.</p>
+    <p>The wallet has an idle auto-lock that fires after 10 minutes of inactivity. With a session password set, locking only wipes the in-memory keys — you can re-unlock by re-entering the password without re-deriving from your seed. Without a password, locking wipes everything and bounces you back to the seed entry screen.</p>
+
+    <h2>Third parties</h2>
+    <p>The site itself loads from one origin only: <code>monero-web.com</code> (served by Cloudflare). It does not load any external JavaScript, fonts, analytics scripts, or images. Specifically:</p>
+    <ul>
+      <li><strong>No Google Analytics, Plausible, Fathom, or any other analytics service</strong></li>
+      <li><strong>No Google Fonts</strong> — fonts are self-hosted at <code>/fonts/</code></li>
+      <li><strong>No external QR generator</strong> — the QR code in the receive modal is rendered by a vendored pure-JavaScript library</li>
+      <li><strong>No CDN-hosted libraries</strong> — every script comes from our own origin</li>
+    </ul>
+
+    <h2>For the curious</h2>
+    <p>Everything described here can be verified by reading the source code on <a href="https://github.com/Medtabka/monero-web" target="_blank" rel="noopener">GitHub</a> or by opening DevTools → Network on any page of monero-web.com and watching exactly which requests are made. The full security and threat model is documented in <a href="https://github.com/Medtabka/monero-web#threat-model" target="_blank" rel="noopener">the README</a> and the disclosure policy is in <a href="https://github.com/Medtabka/monero-web/blob/main/SECURITY.md" target="_blank" rel="noopener">SECURITY.md</a>.</p>
+
+    <h2>Changes to this page</h2>
+    <p>If anything on this page changes, the change will be visible in the git history of <code>privacy.html</code> in the public repository. There is no other notification mechanism because there is no mailing list and no user accounts.</p>
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-row">
+      <a href="/">Home</a>
+      <a href="/verify">Open Wallet</a>
+      <a href="https://github.com/Medtabka/monero-web" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/Medtabka/monero-web/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a>
+    </div>
+    <div>monero-web.com · MIT licensed · Not affiliated with The Monero Project</div>
+  </div>
+</footer>
+
+</body>
+</html>

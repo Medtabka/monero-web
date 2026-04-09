@@ -34,6 +34,7 @@ global.Keccak256       = require('../js/keccak256.js');
 global.MoneroEd25519   = require('../js/monero-ed25519.js');
 global.MoneroWordList  = require('../js/monero-wordlist.js');
 require('../js/monero-english-wordlist.js');
+require('../js/monero-wordlists-all.js');
 global.BIP39_WORDLIST  = require('../js/bip39-wordlist.js');
 global.Bip39           = require('../js/bip39.js');
 global.Polyseed        = require('../js/polyseed.js');
@@ -167,6 +168,27 @@ function assertEq(actual, expected, msg) {
     } catch (e) { threw = true; }
     assert(threw, '(0,0) should throw');
   });
+
+  // 13-language round-trip — guards against the wordlist regression we
+  // had earlier where the all-languages JS file was malformed and only the
+  // English wordlist actually loaded in the browser. If any of these break,
+  // a real seed in that language can't be imported.
+  const ALL_LANGUAGES = [
+    'english',  'spanish',  'french',     'german',
+    'italian',  'portuguese', 'russian', 'japanese',
+    'chinese_simplified', 'dutch', 'esperanto', 'lojban', 'english_old',
+  ];
+  for (const lang of ALL_LANGUAGES) {
+    await test(`25-word round-trip — ${lang}`, () => {
+      assert(MoneroWordList.isLoaded(lang), `wordlist "${lang}" failed to load`);
+      const w = MoneroKeys.generateWallet(lang, 'mainnet');
+      assert(w.mnemonic.split(/\s+/).length === 25, '25 words expected');
+      const k = MoneroKeys.deriveFromMnemonic(w.mnemonic, lang, 'mainnet');
+      assertEq(k.address,            w.address,            'address');
+      assertEq(k.privateSpendKeyHex, w.privateSpendKeyHex, 'spend key');
+      assertEq(k.privateViewKeyHex,  w.privateViewKeyHex,  'view key');
+    });
+  }
 
   // Network selection
   await test('Stagenet derivation produces a 5… address', () => {
