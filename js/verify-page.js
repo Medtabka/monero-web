@@ -1,6 +1,17 @@
 // SPDX-License-Identifier: MIT
 // verify-page.js — moved inline so the CSP can drop 'unsafe-inline' for scripts
 document.addEventListener('DOMContentLoaded', () => {
+  // Defensive helpers — return safe defaults if a referenced element is
+  // missing. Stops "cannot read property 'value' of null" errors when a
+  // user is running a stale cached version of this script against a
+  // newer HTML (or vice versa) where one side knows about an element
+  // the other doesn't.
+  const $val = (id) => {
+    const el = document.getElementById(id);
+    return (el && typeof el.value === 'string') ? el.value : '';
+  };
+  const $el = (id) => document.getElementById(id);
+
   // If there's already a wallet session in this tab, surface a banner that
   // jumps the user straight to the dashboard instead of forcing them to
   // re-enter their seed. They can still derive a different wallet from this
@@ -95,8 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setTimeout(() => {
       try {
-        const addr     = watchAddr.value.trim();
-        const viewHex  = watchView.value.trim().toLowerCase();
+        const addr     = (watchAddr && watchAddr.value || '').trim();
+        const viewHex  = (watchView && watchView.value || '').trim().toLowerCase();
         // Derive the public view key from the supplied private view key so the
         // dashboard can still verify itself locally. We do NOT have the public
         // spend key here (would require base58 address decoding), so the
@@ -107,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pubView   = MoneroEd25519.scalarmultBase(reduced);
         const keys = {
           address:            addr,
-          network:            document.getElementById('network-select').value,
+          network:            $val('network-select') || 'mainnet',
           privateSpendKeyHex: '',
           privateViewKeyHex:  MoneroKeys.bytesToHex(reduced),
           publicSpendKeyHex:  '',
@@ -136,11 +147,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setTimeout(async () => {
       try {
-        const mnemonic = seedInput.value.trim();
+        const mnemonic = (seedInput && seedInput.value || '').trim();
         // Language is auto-detected by MoneroKeys.detectLanguage(); we pass
         // null so the engine picks whichever wordlist actually matches.
-        const network = document.getElementById('network-select').value;
-        const passphrase = document.getElementById('bip39-pass').value;
+        const network    = $val('network-select') || 'mainnet';
+        const passphrase = $val('bip39-pass');
         const keys = await MoneroKeys.deriveFromAnyMnemonic(mnemonic, null, network, passphrase);
         showResults(keys);
       } catch(e) {
@@ -164,8 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setTimeout(() => {
       try {
-        const network = document.getElementById('network-select').value;
-        const keys = MoneroKeys.deriveFromSpendKey(spendKeyInput.value.trim().toLowerCase(), network);
+        const network = $val('network-select') || 'mainnet';
+        const spendHex = (spendKeyInput && spendKeyInput.value || '').trim().toLowerCase();
+        const keys = MoneroKeys.deriveFromSpendKey(spendHex, network);
         showResults(keys);
       } catch(e) {
         errorEl.textContent = 'Error: ' + e.message;
@@ -222,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('btn-open-wallet').addEventListener('click', async () => {
         if (!window._derivedKeys) return;
         const k = window._derivedKeys;
-        const pw = document.getElementById('session-pw').value;
+        const pw = $val('session-pw');
         await WalletVault.store({
           address: k.address,
           network: k.network,
@@ -264,8 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         try {
           const wallet = MoneroKeys.generateWallet(
-            document.getElementById('create-lang').value,
-            document.getElementById('network-select').value
+            $val('create-lang') || 'english',
+            $val('network-select') || 'mainnet'
           );
 
           document.getElementById('create-mnemonic').textContent = wallet.mnemonic;
@@ -294,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('btn-open-wallet-create').addEventListener('click', async () => {
               if (!window._derivedKeys) return;
               const k = window._derivedKeys;
-              const pw = document.getElementById('session-pw-create').value;
+              const pw = $val('session-pw-create');
               await WalletVault.store({
                 address: k.address,
                 network: k.network,
