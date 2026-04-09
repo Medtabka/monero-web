@@ -1,5 +1,5 @@
 # monero-web build manifest
-# Generated 2026-04-09T14:28:26Z from commit c145d61
+# Generated 2026-04-09T15:57:01Z from commit f49343c
 #
 # Verify the live deployment matches a specific git tag with:
 #   git checkout v0.1.0
@@ -8,7 +8,7 @@
 # Or verify a single file against the live site:
 #   curl -sf https://monero-web.com/dashboard | sha256sum
 #
-5430f70b468e28898065b779ba459f7eede9f91d6e50e96857ae801424555342  dashboard.html
+43483ea5c6084deee39c693b7111c9e50941e8f8c52c60c72729bebc2f02c676  dashboard.html
 a2d9e1c683d93f50460f9c99fb780717bfaeac2a77cdc198a0aba106e80910d5  donation-qr.svg
 74c3f278c6592eb0c0dce7400c3b468fbb3986f5aea469039fab49e1a347d2e6  favicon.svg
 e17cfd15fb96909d64095015f958207063a0c07191da3512df7d560a781aebdf  fonts/028edbf56089.woff2
@@ -23,10 +23,11 @@ db5ff4db83e580426280e9337a58dc57d3a83784a1b03ad80914651594441d52  fonts/c8b23d7b
 9393544263379cc41c23bc7b8e5f8b45ac050ae11eecb8eb83dba412821bc113  index.html
 f5d61babe30ae09ed28b1b5183e45fbf17941fcbb208bd4c47e1abfed4494a3e  js/bip39.js
 a0bf069d19922a0df40c278c40bc82a8edc55658b587d1bb5a09b5a06ec98244  js/bip39-wordlist.js
-85c2c56d31cb9c8743e6a52afdb96eaa0985cec03d60837313f618938fc9c326  js/dashboard-page.js
+23bdd42fc75005c6d28cfdb3e8b2b7428386ae6583ee158ef6cb6c3f18fed321  js/dashboard-page.js
 5fd70306222d65cfa060fed66c9c1d2b77c1626320255554187d19b5f81c6d0b  js/index-page.js
 ca17e7555699565d53195a7404306ac7b9399704d80fa379b61355e5f9b19b20  js/jsqr.js
 b780f029e218e4b7c7142cfdb2161f8fb30248da8f9c022619812bc9180e7d69  js/keccak256.js
+20a3a05afac3f50e895130e03650a392c817ee07d0e6678b362ce4862eff84ee  js/lws-client.js
 9eee6ea1db393dfbd12bb06e4116d5c61f3c03aa75b4be3403d362857cde821a  js/monero-ed25519.js
 d5809ca4685de99f36ca8f14650ce73b1ed5abfa196a75a1d225a0e82ceb006d  js/monero-english-wordlist.js
 793af986e54e3299bed936e95fa4bae21af19946e32030bda3d93d053d1af32a  js/monero-keys.js

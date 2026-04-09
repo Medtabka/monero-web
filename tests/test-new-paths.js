@@ -41,6 +41,16 @@ global.Polyseed        = require('../js/polyseed.js');
 global.MoneroKeys      = require('../js/monero-keys.js');
 global.MoneroSubaddress = require('../js/monero-subaddress.js');
 global.WalletVault     = require('../js/wallet-vault.js');
+// LwsClient relies on `localStorage` and a few browser globals; provide
+// minimal shims so the require() doesn't blow up under Node.
+global.localStorage = {
+  _s: {},
+  getItem(k) { return this._s[k] || null; },
+  setItem(k, v) { this._s[k] = String(v); },
+  removeItem(k) { delete this._s[k]; },
+};
+global.location = { hostname: 'localhost' };
+global.LwsClient = require('../js/lws-client.js');
 
 // ── Tiny test harness ───────────────────────────────────────────────
 let pass = 0, fail = 0;
@@ -232,6 +242,52 @@ function assertEq(actual, expected, msg) {
     let threw = false;
     try { await WalletVault.unlock('wrong'); } catch (e) { threw = true; }
     assert(threw, 'wrong password should throw');
+  });
+
+  // ── LwsClient (mock-mode behaviour) ────────────────────────────────
+  await test('LwsClient.formatXmr — atomic units → human XMR', () => {
+    assertEq(LwsClient.formatXmr('1000000000000'), '1');
+    assertEq(LwsClient.formatXmr('1234567890000'), '1.23456789');
+    assertEq(LwsClient.formatXmr('0'), '0');
+    assertEq(LwsClient.formatXmr('1'), '0.000000000001');
+  });
+
+  await test('LwsClient.availableBalance — total - sent - locked', () => {
+    const info = { total_received: '5000000000000', total_sent: '2000000000000', locked_funds: '500000000000' };
+    assertEq(LwsClient.availableBalance(info).toString(), '2500000000000');
+  });
+
+  await test('LwsClient.availableBalance — never negative', () => {
+    const info = { total_received: '0', total_sent: '1000', locked_funds: '0' };
+    assertEq(LwsClient.availableBalance(info).toString(), '0');
+  });
+
+  await test('LwsClient.scanProgress — partway through', () => {
+    const info = { start_height: 1000, scanned_block_height: 1500, blockchain_height: 2000 };
+    assertEq(LwsClient.scanProgress(info), 0.5);
+  });
+
+  await test('LwsClient.scanProgress — fully synced', () => {
+    const info = { start_height: 1000, scanned_block_height: 2000, blockchain_height: 2000 };
+    assertEq(LwsClient.scanProgress(info), 1);
+  });
+
+  await test('LwsClient mock mode is on for localhost', () => {
+    assert(LwsClient.isMock(), 'mock should auto-enable on localhost');
+  });
+
+  await test('LwsClient.login (mock) returns plausible response', async () => {
+    const r = await LwsClient.login('4ABC', 'deadbeef', { generatedLocally: true });
+    assert(typeof r.start_height === 'number', 'start_height present');
+    assert(r.generated_locally === true, 'echoes generated_locally');
+  });
+
+  await test('LwsClient.getAddressInfo (mock) returns scanning state', async () => {
+    const r = await LwsClient.getAddressInfo('4ABC', 'deadbeef');
+    assert(r.blockchain_height > 0, 'blockchain_height set');
+    assert(r.total_received !== undefined, 'total_received present');
+    const avail = LwsClient.availableBalance(r);
+    assert(avail > 0n, 'mock balance > 0');
   });
 
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed\n');

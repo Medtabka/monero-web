@@ -336,6 +336,79 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // ─── Light-wallet balance polling ───
+  // Polls monero-lws via js/lws-client.js for the wallet's balance, scan
+  // progress, and recent transactions. Gracefully handles the LWS being
+  // offline (still common: monerod still syncing, lws not yet started)
+  // by showing a "scanning unavailable" message instead of breaking the
+  // dashboard.
+  let balancePollTimer = null;
+  let lwsRegistered = false;
+
+  async function startBalancePolling () {
+    const balEl  = document.getElementById('balance-xmr');
+    const noteEl = document.getElementById('balance-note');
+
+    // Mark as scanning while we wait for the first response
+    balEl.textContent = '—';
+    noteEl.textContent = 'Connecting to light-wallet server…';
+
+    // First call: register the wallet with the LWS. If the wallet was
+    // imported from a seed with a known birthday (polyseed), pass it as
+    // the restore-from height so the LWS doesn't scan the entire chain
+    // from genesis.
+    try {
+      const opts = {};
+      if (walletKeys.seedFormat === 'polyseed' && typeof walletKeys.birthday === 'number') {
+        // Convert polyseed birthday (10-bit weeks since 2021-11-01) to
+        // an approximate block height. Monero block time is ~2 minutes,
+        // so 1 polyseed week = ~5040 blocks.
+        const POLYSEED_EPOCH_HEIGHT = 2477560; // approx height at 2021-11-01
+        opts.createdAt = POLYSEED_EPOCH_HEIGHT + walletKeys.birthday * 5040 * 2;
+      }
+      // Newly-created wallets can skip historical scanning entirely.
+      if (walletKeys.createdAtCurrentTip) opts.generatedLocally = true;
+
+      await LwsClient.login(walletKeys.address, walletKeys.privateViewKeyHex, opts);
+      lwsRegistered = true;
+    } catch (e) {
+      // Server unreachable or refused. Show the note but don't break.
+      console.warn('[lws] register failed:', e);
+      balEl.textContent = '—';
+      noteEl.innerHTML = 'Balance scanning unavailable — ' +
+        '<a href="#" id="bal-retry" style="color:var(--xmr);text-decoration:underline">retry</a>';
+      const r = document.getElementById('bal-retry');
+      if (r) r.addEventListener('click', (ev) => { ev.preventDefault(); startBalancePolling(); });
+      return;
+    }
+
+    // Tight first poll to surface initial state quickly, then 30s cadence.
+    if (balancePollTimer) clearInterval(balancePollTimer);
+    pollBalanceOnce();
+    balancePollTimer = setInterval(pollBalanceOnce, 30000);
+  }
+
+  async function pollBalanceOnce () {
+    if (!lwsRegistered) return;
+    const balEl  = document.getElementById('balance-xmr');
+    const noteEl = document.getElementById('balance-note');
+    try {
+      const info = await LwsClient.getAddressInfo(walletKeys.address, walletKeys.privateViewKeyHex);
+      const avail = LwsClient.availableBalance(info);
+      const progress = LwsClient.scanProgress(info);
+      balEl.textContent = LwsClient.formatXmr(avail);
+      if (progress < 1) {
+        const pct = (progress * 100).toFixed(1);
+        noteEl.textContent = 'Scanning blockchain · ' + pct + '%';
+      } else {
+        noteEl.textContent = 'Up to date · last checked ' + new Date().toLocaleTimeString();
+      }
+    } catch (e) {
+      console.warn('[lws] poll failed:', e);
+      noteEl.textContent = 'Light-wallet server temporarily unavailable';
+    }
+  }
+
   // Wraps the network connect + populate flow so it can be called both on
   // initial load and from any in-page retry button without reloading.
   async function connectAndPopulate () {
@@ -360,9 +433,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('net-fee').textContent = 'unavailable';
       }
 
-      document.getElementById('balance-xmr').textContent = '—';
-      document.getElementById('balance-note').textContent =
-        'Balance scanning requires a light-wallet server (coming soon)';
+      // Kick off the light-wallet scan via monero-lws. The actual UI updates
+      // are driven by startBalancePolling() below — this just registers the
+      // wallet on first load. If the LWS is unreachable (still building, sync
+      // not done, etc.) the UI shows an explanatory message and falls back
+      // to "balance unknown — scanning unavailable" rather than breaking the
+      // dashboard.
+      startBalancePolling();
     } catch (e) {
       // Build a structured error block with two recovery options.
       const ls = document.getElementById('loading-state');
