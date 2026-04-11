@@ -397,6 +397,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const avail = LwsClient.availableBalance(info);
       const progress = LwsClient.scanProgress(info);
       balEl.textContent = LwsClient.formatXmr(avail);
+      // Refresh tx history in parallel on the same cadence
+      pollTxHistoryOnce();
       if (progress < 1) {
         const pct = (progress * 100).toFixed(1);
         noteEl.textContent = 'Scanning blockchain · ' + pct + '%';
@@ -406,6 +408,80 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
       console.warn('[lws] poll failed:', e);
       noteEl.textContent = 'Light-wallet server temporarily unavailable';
+    }
+  }
+
+  // ─── Transaction history polling ───
+  // Runs alongside the balance poll — same 30-second cadence. Fetches
+  // the wallet's full tx list from the LWS and renders it into #tx-list.
+  // Safe to call before the LWS is up (it just shows a loading state).
+  async function pollTxHistoryOnce () {
+    if (!lwsRegistered) return;
+    const listEl = document.getElementById('tx-list');
+    if (!listEl) return;
+    try {
+      const resp = await LwsClient.getAddressTxs(walletKeys.address, walletKeys.privateViewKeyHex);
+      const txs = (resp && Array.isArray(resp.transactions)) ? resp.transactions : [];
+      const chainTip = (resp && resp.blockchain_height) || 0;
+
+      if (txs.length === 0) {
+        listEl.innerHTML = '<div class="key-card" style="text-align:center;color:var(--text-dim);font-size:.75rem;padding:18px">No transactions yet. Receive some XMR and it\'ll show up here.</div>';
+        return;
+      }
+
+      // Sort newest first by height (mempool txs at top)
+      txs.sort((a, b) => {
+        if (a.mempool && !b.mempool) return -1;
+        if (b.mempool && !a.mempool) return 1;
+        return (b.height || 0) - (a.height || 0);
+      });
+
+      const rows = txs.map(tx => {
+        const received = BigInt(tx.total_received || '0');
+        const sent     = BigInt(tx.total_sent     || '0');
+        const net      = received - sent;          // positive = incoming
+        const isIn     = net >= 0n;
+        const display  = LwsClient.formatXmr(net < 0n ? -net : net);
+        const confirms = tx.mempool ? 0 : Math.max(0, chainTip - (tx.height || 0));
+        const when     = tx.timestamp ? new Date(tx.timestamp).toLocaleString() : '—';
+        const status   = tx.mempool
+          ? '<span style="color:var(--warning)">pending</span>'
+          : (confirms < 10
+            ? '<span style="color:var(--warning)">' + confirms + ' / 10 confs</span>'
+            : '<span style="color:var(--success)">confirmed</span>');
+        const arrow    = isIn ? '↓' : '↑';
+        const arrowCol = isIn ? 'var(--success)' : 'var(--xmr)';
+        const hash     = (tx.hash || '').slice(0, 16) + '…';
+
+        return '<div class="key-card" style="margin-bottom:6px;padding:12px 14px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">' +
+            '<div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">' +
+              '<span style="font-size:1.1rem;color:' + arrowCol + ';font-weight:700;flex-shrink:0">' + arrow + '</span>' +
+              '<div style="min-width:0">' +
+                '<div style="font-size:.82rem;font-weight:600;color:var(--text);font-family:\'JetBrains Mono\',monospace">' + (isIn ? '+' : '−') + display + ' <span style="color:var(--text-dim);font-size:.7rem;font-weight:400">XMR</span></div>' +
+                '<div style="font-size:.65rem;color:var(--text-dim);margin-top:2px">' + escapeHtml(when) + ' · ' + status + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="font-family:\'JetBrains Mono\',monospace;font-size:.62rem;color:var(--text-dim);cursor:pointer" title="Click to copy tx hash" data-txhash="' + escapeHtml(tx.hash || '') + '">' + escapeHtml(hash) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      listEl.innerHTML = rows;
+      // Click-to-copy on tx hashes
+      listEl.querySelectorAll('[data-txhash]').forEach(el => {
+        el.addEventListener('click', () => {
+          const h = el.getAttribute('data-txhash');
+          if (h) navigator.clipboard.writeText(h).then(() => {
+            const old = el.textContent;
+            el.textContent = 'Copied!';
+            setTimeout(() => { el.textContent = old; }, 1200);
+          });
+        });
+      });
+    } catch (e) {
+      console.warn('[lws] tx history fetch failed:', e);
+      listEl.innerHTML = '<div class="key-card" style="text-align:center;color:var(--text-dim);font-size:.75rem;padding:18px">Could not load transactions — will retry on next poll</div>';
     }
   }
 
