@@ -35,6 +35,48 @@ document.addEventListener('DOMContentLoaded', () => {
     25: { name:'Monero Standard', cls:'standard', icon:'◆' },
   };
 
+  // ─── Advanced: custom Monero node URL ───
+  // Reads and writes the same localStorage key that js/monero-rpc.js uses,
+  // so whatever the user sets here on the verify page is automatically
+  // picked up by the dashboard's MoneroRPC calls. Letting users configure
+  // this BEFORE deriving keys means the view key can go straight to their
+  // own node on the first LWS /login call — it never touches our default.
+  const NODE_KEY = 'monero-web-node-url';
+  const advInput = $el('adv-node-url');
+  const advMsg   = $el('adv-node-msg');
+  const advSave  = $el('adv-node-save');
+  const advReset = $el('adv-node-reset');
+  if (advInput) {
+    try { advInput.value = localStorage.getItem(NODE_KEY) || ''; } catch (e) {}
+    if (advMsg && advInput.value) {
+      advMsg.textContent = 'Using your custom node.';
+      advMsg.style.color = 'var(--success)';
+    }
+    if (advSave) advSave.addEventListener('click', () => {
+      const v = (advInput.value || '').trim();
+      if (v && !/^https?:\/\//.test(v)) {
+        advMsg.textContent = 'URL must start with http:// or https://';
+        advMsg.style.color = '#f87171';
+        return;
+      }
+      try {
+        if (v) localStorage.setItem(NODE_KEY, v.replace(/\/$/, ''));
+        else   localStorage.removeItem(NODE_KEY);
+        advMsg.textContent = v ? 'Saved. Your wallet will use this node.' : 'Cleared. Using monero-web proxy.';
+        advMsg.style.color = v ? 'var(--success)' : 'var(--text-dim)';
+      } catch (e) {
+        advMsg.textContent = 'Could not save: ' + e.message;
+        advMsg.style.color = '#f87171';
+      }
+    });
+    if (advReset) advReset.addEventListener('click', () => {
+      try { localStorage.removeItem(NODE_KEY); } catch (e) {}
+      advInput.value = '';
+      advMsg.textContent = 'Reverted to monero-web proxy (default).';
+      advMsg.style.color = 'var(--text-dim)';
+    });
+  }
+
   // ─── TABS ───
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {

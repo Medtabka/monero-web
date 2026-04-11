@@ -158,6 +158,26 @@ footer p{font-size:.7rem;color:var(--text-dim)}
           <p>Create a new wallet, restore from seed phrase, or import a private key. Everything runs locally in your browser.</p>
         </div>
 
+        <!-- Advanced settings — collapsed by default. Privacy-conscious
+             users can point the wallet at their own Monero node / LWS
+             BEFORE deriving keys, so the view key never touches our
+             default proxy. -->
+        <details style="margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px">
+          <summary style="cursor:pointer;font-size:.76rem;color:var(--text-mid);list-style:none;display:flex;align-items:center;gap:8px;user-select:none">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H2a2 2 0 010-4h.09A1.65 1.65 0 004.6 8a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V2a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H22a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            <span>Advanced · use your own Monero node</span>
+          </summary>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <p style="font-size:.68rem;color:var(--text-dim);line-height:1.5;margin-bottom:8px">Point the wallet at a Monero node you control. The view key is sent to this node for balance scanning — leave it at the default (monero-web proxy) unless you're running your own <code>monerod</code>.</p>
+            <input id="adv-node-url" type="text" placeholder="https://my-node.example:18089" autocomplete="off" spellcheck="false" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.72rem;outline:none;margin-bottom:6px">
+            <div style="display:flex;gap:6px">
+              <button id="adv-node-save" type="button" class="btn-secondary" style="flex:1;padding:8px;font-size:.72rem;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer">Save</button>
+              <button id="adv-node-reset" type="button" class="btn-secondary" style="flex:1;padding:8px;font-size:.72rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);cursor:pointer">Reset to default</button>
+            </div>
+            <div id="adv-node-msg" style="font-size:.66rem;color:var(--text-dim);margin-top:6px;min-height:12px"></div>
+          </div>
+        </details>
+
         <div class="input-group" style="margin-bottom:14px">
           <label>Network</label>
           <select id="network-select" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:'Outfit',sans-serif;font-size:.82rem;color:var(--text);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg width=&quot;10&quot; height=&quot;6&quot; viewBox=&quot;0 0 10 6&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M1 1l4 4 4-4&quot; stroke=&quot;%236e6c6a&quot; stroke-width=&quot;1.5&quot; fill=&quot;none&quot;/></svg>');background-repeat:no-repeat;background-position:right 14px center">
