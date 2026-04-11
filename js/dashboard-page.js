@@ -490,8 +490,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // ─── SEND MODAL ───
+  // Multi-step: form → confirm → result. All three steps live inside
+  // #send-modal; we toggle their visibility on transition.
+  let sendPreview = null;      // cached fee estimate from Review step
+  let sendPriority = 2;
+
+  function sendShowStep (step) {
+    ['form', 'confirm', 'result'].forEach(s => {
+      const el = document.getElementById('send-step-' + s);
+      if (el) el.style.display = (s === step) ? '' : 'none';
+    });
+  }
+  function sendShowResultState (state) {
+    ['pending', 'success', 'error'].forEach(s => {
+      const el = document.getElementById('send-result-' + s);
+      if (el) el.style.display = (s === state) ? '' : 'none';
+    });
+  }
+  function sendResetForm () {
+    sendPreview = null;
+    const errEl = document.getElementById('send-error');
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    sendShowStep('form');
+  }
+
   document.getElementById('btn-send').addEventListener('click', () => {
+    if (isWatchOnly) {
+      alert('Watch-only wallets cannot send — the spend key is required.');
+      return;
+    }
+    sendResetForm();
     document.getElementById('send-modal').classList.add('show');
+    // Update "Available" from the latest LWS poll
+    const balText = document.getElementById('balance-xmr').textContent;
+    const availEl = document.getElementById('send-available');
+    if (availEl) availEl.textContent = balText;
   });
 
   document.getElementById('send-close').addEventListener('click', () => {
@@ -500,6 +533,122 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('send-modal').addEventListener('click', (e) => {
     if (e.target.id === 'send-modal') e.target.classList.remove('show');
+  });
+
+  // Priority buttons
+  document.querySelectorAll('.send-prio-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.send-prio-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      sendPriority = parseInt(btn.dataset.priority, 10) || 2;
+    });
+  });
+
+  // Recipient address live validation + hint
+  const sendToEl = document.getElementById('send-to');
+  const sendToHintEl = document.getElementById('send-to-hint');
+  const sendAmountEl = document.getElementById('send-amount');
+  const sendReviewBtn = document.getElementById('send-review');
+  function refreshSendReviewState () {
+    const addr = (sendToEl.value || '').trim();
+    const amt  = (sendAmountEl.value || '').trim();
+    const v = MoneroSend.validateAddress(addr);
+    if (addr.length === 0) {
+      sendToHintEl.textContent = '';
+    } else if (!v.valid) {
+      sendToHintEl.textContent = 'Address doesn\'t look valid (' + v.reason + ')';
+      sendToHintEl.style.color = '#f87171';
+    } else {
+      let label = 'Primary address';
+      if (v.integrated) label = 'Integrated address (with payment ID baked in)';
+      else if (v.subaddress) label = 'Subaddress';
+      sendToHintEl.textContent = '✓ ' + label;
+      sendToHintEl.style.color = '#22c55e';
+    }
+    const amtOk = amt.length > 0 && /^\d+(\.\d+)?$/.test(amt) && Number(amt) > 0;
+    sendReviewBtn.disabled = !(v.valid && amtOk);
+    // Show/hide payment ID field for primary addresses only
+    const pidGroup = document.getElementById('send-pid-group');
+    if (pidGroup) pidGroup.style.display = (v.valid && !v.subaddress && !v.integrated) ? '' : 'none';
+  }
+  sendToEl.addEventListener('input', refreshSendReviewState);
+  sendAmountEl.addEventListener('input', refreshSendReviewState);
+
+  // Send max — fills amount with the current balance
+  document.getElementById('send-max').addEventListener('click', () => {
+    const bal = document.getElementById('balance-xmr').textContent;
+    if (bal && bal !== '—') {
+      sendAmountEl.value = bal;
+      refreshSendReviewState();
+    }
+  });
+
+  // Cancel
+  document.getElementById('send-cancel').addEventListener('click', () => {
+    document.getElementById('send-modal').classList.remove('show');
+  });
+
+  // Review → fetch fee estimate
+  sendReviewBtn.addEventListener('click', async () => {
+    const errEl = document.getElementById('send-error');
+    errEl.style.display = 'none';
+    sendReviewBtn.disabled = true;
+    sendReviewBtn.textContent = 'Estimating…';
+    try {
+      const toAddress = (sendToEl.value || '').trim();
+      const xmrAmount = (sendAmountEl.value || '').trim();
+      sendPreview = await MoneroSend.estimateFee(walletKeys, toAddress, xmrAmount, sendPriority);
+
+      document.getElementById('confirm-to').textContent = toAddress;
+      document.getElementById('confirm-amount').textContent = xmrAmount + ' XMR';
+      document.getElementById('confirm-fee').textContent = sendPreview.fee_xmr + ' XMR';
+      const total = (Number(xmrAmount) + Number(sendPreview.fee_xmr)).toString();
+      document.getElementById('confirm-total').textContent = total + ' XMR';
+
+      sendShowStep('confirm');
+    } catch (e) {
+      errEl.textContent = e.message || 'Estimate failed';
+      errEl.style.display = 'block';
+    }
+    sendReviewBtn.disabled = false;
+    sendReviewBtn.textContent = 'Review →';
+  });
+
+  // Back from confirm → form
+  document.getElementById('send-back').addEventListener('click', () => {
+    sendShowStep('form');
+  });
+
+  // Confirm → actually send
+  document.getElementById('send-confirm').addEventListener('click', async () => {
+    sendShowStep('result');
+    sendShowResultState('pending');
+    try {
+      const toAddress = (sendToEl.value || '').trim();
+      const xmrAmount = (sendAmountEl.value || '').trim();
+      const paymentId = (document.getElementById('send-pid').value || '').trim();
+      const result = await MoneroSend.send(walletKeys, toAddress, xmrAmount, sendPriority, paymentId, sendPreview);
+      document.getElementById('send-result-hash').textContent = result.tx_hash;
+      sendShowResultState('success');
+      // Trigger a balance refresh so the new pending tx shows up
+      if (typeof pollBalanceOnce === 'function') setTimeout(pollBalanceOnce, 2000);
+    } catch (e) {
+      document.getElementById('send-result-error-msg').textContent = e.message || 'Unknown error';
+      sendShowResultState('error');
+    }
+  });
+
+  // Result: Done → close modal
+  document.getElementById('send-done').addEventListener('click', () => {
+    document.getElementById('send-modal').classList.remove('show');
+    sendResetForm();
+    sendToEl.value = '';
+    sendAmountEl.value = '';
+  });
+
+  // Result: Retry → back to form with values intact
+  document.getElementById('send-retry').addEventListener('click', () => {
+    sendShowStep('form');
   });
 
   // ─── QR CODE GENERATOR (simple version using canvas→dataURL) ───

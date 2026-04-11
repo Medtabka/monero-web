@@ -1,5 +1,5 @@
 # monero-web build manifest
-# Generated 2026-04-09T19:27:20Z from commit 7b317a2
+# Generated 2026-04-11T15:37:16Z from commit c3160d4
 #
 # Verify the live deployment matches a specific git tag with:
 #   git checkout v0.1.0
@@ -12,7 +12,7 @@ d68e620fbc82af942be5a8ac429a4d097fd04ff14a3fe89957a96e4acb8cea15  assets/avatar.
 130ce29960149eaf9f35ab593e70d3c03c851210c078792a4d7ed580b9d877db  assets/avatar.svg
 abb3acca2bb26bd0ec2fb8b840f141392cc58c55ab857fc9ddb584c822aae473  assets/social-card.png
 1a4cedee0f410818aad3391cc0f38fb9a36847b9eac181f97031287c06b25f19  assets/social-card.svg
-39ac08005dce615dea508760a5f39441ba6f8b1e573aeb9aad19f5dbda91308e  dashboard.html
+e7d7f1da710b287874908442d55307b155877536eb969ac21c3ad1ad694992cd  dashboard.html
 a2d9e1c683d93f50460f9c99fb780717bfaeac2a77cdc198a0aba106e80910d5  donation-qr.svg
 74c3f278c6592eb0c0dce7400c3b468fbb3986f5aea469039fab49e1a347d2e6  favicon.svg
 e17cfd15fb96909d64095015f958207063a0c07191da3512df7d560a781aebdf  fonts/028edbf56089.woff2
@@ -27,7 +27,7 @@ db5ff4db83e580426280e9337a58dc57d3a83784a1b03ad80914651594441d52  fonts/c8b23d7b
 608c4f49863aad2f94ce327e5baadbe89dd7d39be8673c052c28a164fa1e5cd9  index.html
 f5d61babe30ae09ed28b1b5183e45fbf17941fcbb208bd4c47e1abfed4494a3e  js/bip39.js
 a0bf069d19922a0df40c278c40bc82a8edc55658b587d1bb5a09b5a06ec98244  js/bip39-wordlist.js
-23bdd42fc75005c6d28cfdb3e8b2b7428386ae6583ee158ef6cb6c3f18fed321  js/dashboard-page.js
+37c65792e2bfa6bcc9e1f85adb42a1ed880a12d5b9580b7feda6325b8add02b7  js/dashboard-page.js
 5fd70306222d65cfa060fed66c9c1d2b77c1626320255554187d19b5f81c6d0b  js/index-page.js
 ca17e7555699565d53195a7404306ac7b9399704d80fa379b61355e5f9b19b20  js/jsqr.js
 b780f029e218e4b7c7142cfdb2161f8fb30248da8f9c022619812bc9180e7d69  js/keccak256.js
@@ -46,9 +46,11 @@ c8889ee4b0e8f9754d8b283edd36fc0012d52db5244278ad71fc341b8d8316ca  js/mymonero-co
 cee586c946cb838f590db096c8f3d89e58a9c0ec81393f421cfed0fadf3a6c06  js/mymonero-core/MyMoneroCoreCpp_WASM.js
 bf22b13d1187c01fe962b65098e47c9fbd29555eef224e91adeaf30c3d4fc155  js/mymonero-core/MyMoneroCoreCpp_WASM.wasm
 3e30e3f371cf1669f8c114ba0b9440657ed6486b7d47bfefb9d5d05fa28842b2  js/mymonero-core/README.md
+5b06c95f01774fe0aea1ef8ca3d4c948640cc216bb648362e326202f622c56ce  js/mymonero-loader.js
 1fea789d0d94133b6e12ef50408a13bf66d1d4298eb0ab2411d79400b5a3999e  js/polyseed.js
 5f5e2c80f5ba8b2b68d771fc44da7b5fd4a3e256526f78f985644f99e0df84c4  js/qrcodegen.js
 4695ae6ccba75eb2775e6eadab605cad283256ba1866fe78f458baf65b5a5f85  js/qr-scanner.js
+5b424366c05a3dbae6f45eb48c697815b3fc7f0b22a524850fd7711245b4ea6c  js/send.js
 2fd2b928a1cf1ac775d56f31d4e160c1aebabbd1240837b6e09f8a1636952b87  js/verify-page.js
 09e8142a69682bd751ddce6a798fd6eb26511fdbebd9c8b23206643afc95c37b  js/wallet-vault.js
 3e44733b14e744d2476c0c3313ddc3bfcfc676d57b35a5266d95bb8bb0996517  privacy.html
