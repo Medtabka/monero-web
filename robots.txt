@@ -1,0 +1,9 @@
+# monero-web.com — robots.txt
+# Allow everything except the dashboard (it's behind a session gate
+# and has no indexable content without a wallet loaded).
+
+User-agent: *
+Allow: /
+Disallow: /dashboard
+
+Sitemap: https://monero-web.com/sitemap.xml
