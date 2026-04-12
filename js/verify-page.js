@@ -166,13 +166,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       var age = btn.dataset.age;
       var height = ageToHeight(age);
-      if (restoreHeightEl) restoreHeightEl.value = height > 0 ? String(height) : '';
+      if (restoreHeightEl) restoreHeightEl.value = String(height);
       if (selectedLabel) {
         if (age === 'unknown') {
-          selectedLabel.textContent = 'Will scan from genesis (finds everything, may take up to 1-3 hours for very old wallets)';
+          selectedLabel.textContent = 'Will scan from genesis — finds everything, may take 1-3 hours for old wallets';
           selectedLabel.style.color = 'var(--text-dim)';
         } else {
-          selectedLabel.textContent = 'Scanning from ~block ' + height.toLocaleString() + ' — skips older blocks for faster sync';
+          selectedLabel.textContent = 'Restore point set to ~block ' + height.toLocaleString() + ' — full scan required to find historical transactions';
           selectedLabel.style.color = 'var(--success)';
         }
         selectedLabel.style.display = 'block';
@@ -442,6 +442,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 birthday:           (typeof k.birthday === 'number') ? k.birthday : null,
                 createdAtCurrentTip: true,
               }, pw);
+              // Signal the dashboard that this is a freshly-created wallet
+              // so it skips historical scanning. Two signals for redundancy:
+              // vault has createdAtCurrentTip=true, sessionStorage has this flag.
+              try { sessionStorage.setItem('monero-web-fresh-wallet', '1'); } catch (e) {}
               // Pre-register the wallet on the LWS with generated_locally=true
               // BEFORE redirecting to the dashboard. This ensures the LWS
               // creates the account starting from the current chain tip (no

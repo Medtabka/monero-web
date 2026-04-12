@@ -121,15 +121,14 @@ const LwsClient = (function () {
       create_account:    true,
       generated_locally: !!opts.generatedLocally,
     };
-    // For imported wallets (not generated locally), include start_height
-    // so the LWS knows to scan from that block instead of defaulting to
-    // the current tip. Without this, historical transactions are invisible.
+    // Include start_height for imported wallets. NOTE: monero-lws 1.0-alpha
+    // ignores this field entirely — /login always registers at the current
+    // chain tip regardless. We send it anyway for forward-compatibility
+    // with newer monero-lws builds that support it. The actual historical
+    // scan is triggered separately via /import_wallet_request.
     if (!opts.generatedLocally && typeof opts.createdAt === 'number' && opts.createdAt > 0) {
       body.start_height = opts.createdAt;
     } else if (!opts.generatedLocally) {
-      // No birthday known — scan from genesis to catch everything.
-      // This is slow for old wallets but correct. The LWS caches the
-      // result so subsequent logins are instant.
       body.start_height = 0;
     }
     return post('/login', body);
