@@ -367,11 +367,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 birthday:           (typeof k.birthday === 'number') ? k.birthday : null,
                 createdAtCurrentTip: true,
               }, pw);
-              // Signal the dashboard that this is a freshly-created wallet
-              // so it tells the LWS to start from the tip (no history scan).
-              // Uses a separate sessionStorage key (not the vault) so it
-              // works regardless of which version of this JS the browser has.
-              try { sessionStorage.setItem('monero-web-fresh-wallet', '1'); } catch (e) {}
+              // Pre-register the wallet on the LWS with generated_locally=true
+              // BEFORE redirecting to the dashboard. This ensures the LWS
+              // creates the account starting from the current chain tip (no
+              // historical scan needed). The dashboard will see the account
+              // already exists and is "up to date" immediately.
+              try {
+                await LwsClient.login(k.address, k.privateViewKeyHex, { generatedLocally: true });
+              } catch (e) {
+                console.warn('[verify] pre-register on LWS failed (non-fatal):', e);
+              }
               window.location.href = '/dashboard';
             });
           }
