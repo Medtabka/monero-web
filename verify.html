@@ -211,9 +211,21 @@ footer p{font-size:.7rem;color:var(--text-dim)}
           </div>
 
           <div class="input-group" id="restore-height-group">
-            <label>Restore height <span class="hint">Optional · speeds up balance scanning for imported wallets</span></label>
-            <input type="text" id="restore-height" inputmode="numeric" placeholder="Block height or leave empty (auto-detected for Polyseed)" autocomplete="off" spellcheck="false" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text);outline:none">
-            <div style="font-size:.66rem;color:var(--text-dim);margin-top:5px;line-height:1.4">Your old wallet app usually shows this as "restore height" or "wallet creation height." If you don't know it, leave this empty — scanning will start from the beginning (slower but finds everything).</div>
+            <label>When was this wallet created? <span class="hint">Speeds up scanning · auto-detected for Polyseed</span></label>
+            <div id="wallet-age-buttons" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+              <button type="button" class="wallet-age-btn" data-age="week"  style="flex:1 1 auto;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .2s;min-width:80px;text-align:center">This week</button>
+              <button type="button" class="wallet-age-btn" data-age="month" style="flex:1 1 auto;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .2s;min-width:80px;text-align:center">This month</button>
+              <button type="button" class="wallet-age-btn" data-age="3months" style="flex:1 1 auto;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .2s;min-width:80px;text-align:center">~3 months</button>
+              <button type="button" class="wallet-age-btn" data-age="6months" style="flex:1 1 auto;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .2s;min-width:80px;text-align:center">~6 months</button>
+              <button type="button" class="wallet-age-btn" data-age="year"  style="flex:1 1 auto;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .2s;min-width:80px;text-align:center">~1 year</button>
+              <button type="button" class="wallet-age-btn" data-age="2years" style="flex:1 1 auto;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .2s;min-width:80px;text-align:center">~2 years</button>
+              <button type="button" class="wallet-age-btn" data-age="unknown" style="flex:1 1 auto;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .2s;min-width:80px;text-align:center">I don't know</button>
+            </div>
+            <div id="restore-height-selected" style="display:none;font-size:.72rem;color:var(--success);margin-bottom:6px"></div>
+            <details style="margin-top:4px">
+              <summary style="font-size:.68rem;color:var(--text-dim);cursor:pointer;user-select:none">Advanced: enter exact block height</summary>
+              <input type="text" id="restore-height" inputmode="numeric" placeholder="e.g. 3500000" autocomplete="off" spellcheck="false" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text);outline:none;margin-top:6px">
+            </details>
           </div>
 
           <div class="security-notice">

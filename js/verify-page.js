@@ -118,6 +118,81 @@ document.addEventListener('DOMContentLoaded', () => {
       (count === 12) ? 'block' : 'none';
   });
 
+  // ─── WALLET AGE BUTTONS → restore height ───
+  // Each button computes an approximate block height based on how old the
+  // wallet is. Monero blocks are ~2 min apart → 720/day → ~21,600/month.
+  // The reference point is the Monero genesis (April 18, 2014).
+  // We compute dynamically from the current date so buttons stay accurate
+  // as months pass without code changes.
+  const MONERO_GENESIS_TS = Date.UTC(2014, 3, 18) / 1000; // April 18, 2014
+  const SECS_PER_BLOCK = 120; // ~2 minutes
+
+  function dateToApproxHeight(date) {
+    const now = Date.now() / 1000;
+    const target = date.getTime() / 1000;
+    if (target <= MONERO_GENESIS_TS) return 0;
+    return Math.max(0, Math.floor((target - MONERO_GENESIS_TS) / SECS_PER_BLOCK));
+  }
+
+  function ageToHeight(age) {
+    var now = new Date();
+    switch (age) {
+      case 'week':    return dateToApproxHeight(new Date(now - 7 * 86400000));
+      case 'month':   return dateToApproxHeight(new Date(now - 30 * 86400000));
+      case '3months': return dateToApproxHeight(new Date(now - 91 * 86400000));
+      case '6months': return dateToApproxHeight(new Date(now - 182 * 86400000));
+      case 'year':    return dateToApproxHeight(new Date(now - 365 * 86400000));
+      case '2years':  return dateToApproxHeight(new Date(now - 730 * 86400000));
+      case 'unknown': return 0;
+      default:        return 0;
+    }
+  }
+
+  var restoreHeightEl = $el('restore-height');
+  var selectedLabel = $el('restore-height-selected');
+
+  document.querySelectorAll('.wallet-age-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      // Remove active state from all buttons
+      document.querySelectorAll('.wallet-age-btn').forEach(function(b) {
+        b.style.background = 'var(--surface)';
+        b.style.borderColor = 'var(--border)';
+        b.style.color = b.dataset.age === 'unknown' ? 'var(--text-dim)' : 'var(--text)';
+      });
+      // Highlight the clicked button
+      btn.style.background = 'var(--xmr-dim)';
+      btn.style.borderColor = 'rgba(255,102,0,0.4)';
+      btn.style.color = 'var(--xmr)';
+
+      var age = btn.dataset.age;
+      var height = ageToHeight(age);
+      if (restoreHeightEl) restoreHeightEl.value = height > 0 ? String(height) : '';
+      if (selectedLabel) {
+        if (age === 'unknown') {
+          selectedLabel.textContent = 'Will scan from genesis (finds everything, may take up to 1-3 hours for very old wallets)';
+          selectedLabel.style.color = 'var(--text-dim)';
+        } else {
+          selectedLabel.textContent = 'Scanning from ~block ' + height.toLocaleString() + ' — skips older blocks for faster sync';
+          selectedLabel.style.color = 'var(--success)';
+        }
+        selectedLabel.style.display = 'block';
+      }
+    });
+  });
+
+  // Auto-hide the wallet-age section for polyseed (birthday is embedded)
+  // and show it for all other formats. Also hide for BIP-39 passphrase row.
+  seedInput.addEventListener('input', function() {
+    var words = seedInput.value.trim().split(/\s+/).filter(function(w) { return w.length > 0; });
+    var count = words.length;
+    var rhGroup = $el('restore-height-group');
+    if (rhGroup) {
+      // Polyseed (16 words) has an embedded birthday — no need to ask.
+      // For 12/13/25/other, show the age picker.
+      rhGroup.style.display = (count === 16) ? 'none' : 'block';
+    }
+  });
+
   // ─── SPEND KEY INPUT ───
   const spendKeyInput = document.getElementById('spend-key-input');
   const btnKey = document.getElementById('btn-derive-key');
