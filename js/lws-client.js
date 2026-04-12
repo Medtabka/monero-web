@@ -136,6 +136,23 @@ const LwsClient = (function () {
   }
 
   /**
+   * Request a full rescan from genesis for an imported wallet. Must be
+   * called AFTER login() for wallets that have existing transaction
+   * history (i.e., not freshly generated). Without this, the LWS only
+   * scans forward from the tip and misses historical transactions.
+   *
+   * monero-lws treats this as a separate flow from account creation —
+   * /login creates the account, /import_wallet_request triggers the
+   * historical rescan. Both are needed for imported wallets.
+   */
+  async function importWalletRequest (address, viewKey) {
+    return post('/import_wallet_request', {
+      address,
+      view_key: viewKey,
+    });
+  }
+
+  /**
    * Get the wallet's current state (balance, scanning progress, etc.)
    * Called every ~30s while the dashboard is open.
    */
@@ -344,6 +361,7 @@ const LwsClient = (function () {
 
   return {
     login,
+    importWalletRequest,
     getAddressInfo,
     getAddressTxs,
     getUnspentOuts,

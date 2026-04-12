@@ -371,6 +371,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       await LwsClient.login(walletKeys.address, walletKeys.privateViewKeyHex, opts);
       lwsRegistered = true;
+
+      // For imported wallets (not freshly generated), request a full
+      // historical rescan. Without this, monero-lws only scans forward
+      // from the tip and misses existing transactions. The /import
+      // endpoint is idempotent — calling it on an already-imported
+      // wallet is a no-op.
+      if (!opts.generatedLocally) {
+        try {
+          await LwsClient.importWalletRequest(walletKeys.address, walletKeys.privateViewKeyHex);
+        } catch (e) {
+          console.warn('[lws] import request failed (non-fatal):', e);
+        }
+      }
     } catch (e) {
       // Server unreachable or refused. Show the note but don't break.
       console.warn('[lws] register failed:', e);
