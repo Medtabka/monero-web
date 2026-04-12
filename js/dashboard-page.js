@@ -408,13 +408,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                        (walletKeys.seedFormat === 'polyseed' && typeof walletKeys.birthday === 'number') ||
                        walletKeys.restoreHeight > 0;
 
-      if (isNewAccount && hasHistory) {
-        // Imported wallet, first time on the LWS — trigger historical scan
+      if (isNewAccount && hasHistory && restoreHeight === 0) {
+        // Imported wallet with NO known birthday/restore height —
+        // call /import to trigger a full genesis scan. This is the
+        // slow path (~3 hours) but it's the only way to find all
+        // historical transactions when we don't know the wallet age.
         try {
           await LwsClient.importWalletRequest(walletKeys.address, walletKeys.privateViewKeyHex);
         } catch (e) {
           console.warn('[lws] import request failed (non-fatal):', e);
         }
+      } else if (isNewAccount && restoreHeight > 0) {
+        // Imported wallet WITH a known birthday/restore height —
+        // the /login already set start_height correctly. Do NOT
+        // call /import because it RESETS the scan to genesis,
+        // wiping the start_height we just set.
+        console.log('[lws] wallet has restore height ' + restoreHeight + ' — skipping import (login set start_height)');
       } else if (isNewAccount && !hasHistory) {
         // Freshly created wallet — no scan needed, LWS starts from tip
         console.log('[lws] new wallet, no history — skipping import');
