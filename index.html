@@ -387,11 +387,11 @@ footer{padding:48px 0 32px;border-top:1px solid var(--border);margin-top:64px;co
         </details>
         <details>
           <summary>How is this different from MyMonero?</summary>
-          <p>MyMonero is a light-wallet service: a server scans the blockchain on your behalf using your view key. We don't run any server. Right now we don't yet do output scanning at all — see "Can I send XMR?" below — but the trade-off is that we never see your view key either.</p>
+          <p>MyMonero was a light-wallet service: a server scanned the blockchain on your behalf using your view key. We run the same architecture — our self-hosted light-wallet server (monero-lws) scans the blockchain using your view key so you can see balances and send transactions. Your spend key never leaves your browser. The key difference: our server is self-hosted on infrastructure we control, and the entire stack (site + node + LWS) is open source and self-hostable.</p>
         </details>
         <details>
           <summary>Can I send XMR from here?</summary>
-          <p>Not yet. Sending Monero requires scanning the blockchain to find your spendable outputs, then constructing a ring-signature transaction client-side. We're building this in two stages: first an opt-in light-wallet integration (your view key, a server you can self-host), then full WebAssembly-based scanning so the whole thing runs in your tab. For now, you can <strong>receive</strong> XMR safely.</p>
+          <p>Yes. The wallet uses a light-wallet server (monero-lws, running on our self-hosted VPS) to scan the blockchain for your spendable outputs, then constructs and signs the transaction entirely in your browser using WebAssembly. Your spend key never leaves your browser tab — the server only sees your view key (for scanning) and the final signed transaction hex (for broadcasting). This is the same architecture MyMonero used for 12 years.</p>
         </details>
         <details>
           <summary>Why a web wallet at all? Aren't they less secure?</summary>

@@ -32,8 +32,13 @@ Browser (client-side)
 ├── monero-rpc.js        — JSON-RPC client via serverless proxy
 └── monero-wordlists     — All 13 language wordlists (1626 words each)
 
-Netlify (serverless)
-└── node-proxy.js        — CORS proxy to Monero remote nodes
+Cloudflare Pages (serverless)
+├── functions/api/proxy.js — Smart RPC proxy (prefers own node when synced, falls back to public nodes)
+└── functions/_middleware.js — Cache-control headers
+
+VPS (Hetzner CAX21, self-hosted)
+├── monerod              — Pruned Monero node (synced, RPC on localhost:18081)
+└── monero-lws           — Light-wallet server for balance scanning (REST on localhost:8443)
 ```
 
 ### Key Derivation
@@ -67,7 +72,7 @@ This wallet is one of the few that still supports MyMonero 13-word legacy seeds 
 - **No key storage** — keys exist only in sessionStorage, cleared when you close the tab
 - **No tracking** — no analytics, no cookies, no telemetry
 - **Open source** — audit the code yourself
-- **Proxy is key-blind** — the Netlify proxy forwards RPC requests to Monero nodes but never sees your private keys
+- **Proxy is key-blind** — the Cloudflare Pages proxy forwards RPC requests to Monero nodes but never sees your private keys. The light-wallet server (monero-lws) sees your view key for scanning but never sees your spend key
 
 ### What the proxy can see
 
@@ -84,8 +89,9 @@ Clone this repo and deploy to any static hosting:
 ```bash
 git clone https://github.com/Medtabka/monero-web.git
 cd monero-web
-# Deploy to Netlify, Vercel, or any static host
-# For the RPC proxy, you need Netlify Functions or your own backend
+# Deploy to Cloudflare Pages, Vercel, or any static host
+# For the RPC proxy, you need Cloudflare Functions or your own backend
+# For balance scanning, run monerod + monero-lws on a VPS
 ```
 
 Or run locally:
@@ -123,7 +129,7 @@ chain to compromise.
 **What monero-web protects against:**
 
 - **A compromised or malicious server.** All key derivation, all signing, and all
-  address generation happen inside your browser tab. The Netlify host that serves
+  address generation happen inside your browser tab. The Cloudflare host that serves
   the static files never sees your seed, keys, or balance. Even the RPC proxy
   is key-blind: it sees blockchain queries, not wallet contents.
 - **A compromised npm dependency.** There are no dependencies. The crypto engine
@@ -181,10 +187,15 @@ can't afford to lose, use Monero CLI on an air-gapped machine.
 - [x] Wallet JSON export
 - [x] Receive screen with client-side QR code
 - [x] Live network data via remote node
-- [ ] Balance scanning (light-wallet integration first, then optional WASM scanner)
-- [ ] Send XMR with client-side transaction signing
-- [ ] Transaction history
-- [ ] Address book / labeled subaddresses
+- [x] Balance scanning via self-hosted monero-lws (light-wallet server)
+- [x] Send XMR with client-side WASM transaction signing (mymonero-core-js)
+- [x] Transaction history via LWS
+- [x] Address book / labeled subaddresses with localStorage persistence
+- [x] QR code scanner for `monero:` URIs (camera-based, vendored jsQR)
+- [x] Strict CSP without `'unsafe-inline'` for scripts
+- [x] DNSSEC end-to-end (Cloudflare + Porkbun)
+- [x] Self-hosted monerod (pruned) + monero-lws on Hetzner CAX21
+- [x] Smart RPC proxy (auto-fails over to public nodes when own node is down)
 - [ ] Swap integration (ChangeNow / Majestic Bank)
 - [ ] PWA support (install on home screen)
 

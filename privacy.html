@@ -92,27 +92,48 @@ footer a:hover{color:var(--text)}
     <p class="lead">monero-web is a non-custodial wallet. We do not collect, store, or transmit anything that could be used to identify you, recover your funds, or link you to your Monero activity.</p>
 
     <div class="callout">
-      <strong>The short version:</strong> we have no servers that hold your data, no analytics, no cookies, no trackers, no email signup, no account, no logs we can hand over to anyone — because none of that exists.
+      <strong>The short version:</strong> your seed phrase and private spend key never leave your browser tab. Your private view key is sent to our light-wallet server so it can scan the blockchain for your incoming payments — that server cannot spend your funds. We have no analytics, no cookies, no trackers, no email signup, no accounts.
     </div>
 
     <h2>What we do not collect</h2>
     <ul>
       <li><strong>Your seed phrase</strong> — never transmitted, never logged, never leaves your browser tab. All key derivation runs locally inside your tab using JavaScript that you can read in DevTools.</li>
-      <li><strong>Your private spend key, view key, or address</strong> — derived in your browser from your seed and used only inside your tab.</li>
-      <li><strong>Your wallet balance, transaction history, or contacts</strong> — these are not currently scanned at all (the wallet only does receive flows today). When balance scanning is added, it will be opt-in and route through infrastructure we explicitly document.</li>
+      <li><strong>Your private spend key</strong> — stays in your browser tab. Used locally to sign transactions. Never transmitted to any server.</li>
       <li><strong>Cookies, fingerprints, or analytics IDs</strong> — there are no third-party scripts or cookies on this site at all. Open DevTools → Application → Cookies on any page and the list is empty.</li>
       <li><strong>Email addresses</strong> — there is no signup, no newsletter, no waitlist.</li>
       <li><strong>IP addresses</strong> — Cloudflare (our CDN) sees the IP that requests each page, like every web host on the planet does, but we have no logging on top of that and never inspect Cloudflare's analytics for individual visitors.</li>
     </ul>
 
     <h2>What the wallet does send over the network</h2>
-    <p>The dashboard makes a small number of read-only RPC calls to public Monero remote nodes through a same-origin proxy at <code>/api/proxy</code>. Specifically:</p>
+
+    <h3>1. Blockchain queries (no wallet data)</h3>
+    <p>The dashboard makes read-only RPC calls to our own Monero node (or public fallback nodes) through a same-origin proxy at <code>/api/proxy</code>:</p>
     <ul>
-      <li><code>get_info</code> and <code>get_block_count</code> — to show the current network height and connection state.</li>
-      <li><code>get_fee_estimate</code> — to show the current recommended fee.</li>
+      <li><code>get_info</code> and <code>get_block_count</code> — current network height and connection state.</li>
+      <li><code>get_fee_estimate</code> — the recommended transaction fee.</li>
     </ul>
-    <p>None of these calls include your address, your view key, or any other information that could identify you or your wallet. The proxy forwards them to one of three public Monero remote nodes (Cake Wallet, MoneroDevs, Triplebit) and returns the response. No request is logged on our side.</p>
-    <p>You can also configure a <strong>custom node URL</strong> in the dashboard settings. When set, RPC calls go directly to your own node instead of through our proxy — if you run your own <code>monerod</code>, monero-web sees zero network traffic of yours at all.</p>
+    <p>None of these calls include your address, view key, or any wallet-identifying information.</p>
+
+    <h3>2. Light-wallet server (view key sent)</h3>
+    <p>To show your balance and transaction history, the dashboard sends your <strong>private view key</strong> and <strong>primary address</strong> to our light-wallet server at <code>node.monero-web.com/lws/</code>. The server uses these to scan the blockchain for outputs that belong to your wallet.</p>
+    <div class="callout">
+      <strong>What the light-wallet server sees:</strong>
+      <ul style="margin-top:8px;margin-bottom:0">
+        <li>Your <strong>view key</strong> — needed to identify your incoming payments</li>
+        <li>Your <strong>primary address</strong> — paired with the view key for scanning</li>
+        <li>Your <strong>signed transaction hex</strong> when you send XMR — needed to broadcast to the network</li>
+      </ul>
+    </div>
+    <div class="callout" style="border-left-color:#22c55e;margin-top:12px">
+      <strong>What it does NOT see:</strong>
+      <ul style="margin-top:8px;margin-bottom:0">
+        <li>Your <strong>spend key</strong> — never sent. The server cannot spend your XMR.</li>
+        <li>Your <strong>seed phrase</strong> — never sent.</li>
+        <li>Your <strong>session password</strong> — used client-side only.</li>
+      </ul>
+    </div>
+    <p>The view key alone cannot spend your Monero — it can only scan for incoming payments. This is the same trust model as MyMonero (which ran for 12 years), Cake Wallet's light-wallet mode, and Edge Wallet. The server is self-hosted on infrastructure we control, not a third-party service.</p>
+    <p>If you want to avoid sending your view key to our server, you can self-host the <a href="https://github.com/Medtabka/monero-web" target="_blank" rel="noopener">entire stack</a> (static site + monerod + monero-lws) on your own hardware.</p>
 
     <h2>What Cloudflare can see</h2>
     <p>monero-web.com is hosted on Cloudflare Pages and sits behind Cloudflare's CDN. As with any CDN, Cloudflare's edge servers see:</p>

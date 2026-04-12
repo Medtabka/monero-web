@@ -46,7 +46,8 @@ In scope:
 - The `js/` crypto engine: `keccak256.js`, `monero-ed25519.js`,
   `monero-keys.js`, `monero-wordlist.js`, `bip39.js`, `polyseed.js`,
   `monero-subaddress.js`, `wallet-vault.js`
-- The Netlify proxy in `netlify/functions/`
+- The Cloudflare Pages Function at `functions/api/proxy.js`
+- The self-hosted monero-lws light-wallet server and its API contract
 - CSP, SRI, and any other deployment-side hardening
 
 Out of scope (please don't report these as vulnerabilities):

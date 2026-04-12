@@ -12,7 +12,11 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
-# Netlify local cache
+# Cloudflare / Wrangler local dev artifacts
+.wrangler/
+dist/
+
+# Legacy Netlify (no longer used)
 .netlify/
 
 # Secrets — never commit these

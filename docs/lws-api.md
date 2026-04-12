@@ -43,7 +43,7 @@ scanning the chain from `created_at` (or genesis if not given).
 {
   "address":          "47RzzwG62wBc...VZeRCz",
   "view_key":         "8c0a6f...e1d9",
-  "created_at":       3200000,
+  "create_account":   true,
   "generated_locally": true
 }
 ```
@@ -52,8 +52,8 @@ scanning the chain from `created_at` (or genesis if not given).
 |---|---|---|---|
 | `address` | string | yes | Primary address (95 chars, mainnet `4...`) |
 | `view_key` | hex string | yes | 64-char private view key |
-| `created_at` | int | no | Restore-from block height. For polyseed wallets, derive from `birthday * 2 weeks since 2021-11-01`. For BIP-39 / 25-word, ask the user or default to current chain tip if creating a new wallet. |
-| `generated_locally` | bool | no | `true` for newly-created wallets so the server starts from the tip. `false` for imported wallets so the server scans from `created_at`. |
+| `create_account` | bool | yes | Must be `true` to register a new wallet. Without this, monero-lws rejects the request. |
+| `generated_locally` | bool | no | `true` for newly-created wallets so the server starts from the tip. `false` for imported wallets so the server scans from genesis (or the wallet birthday if known). |
 
 **Response (200):**
 
