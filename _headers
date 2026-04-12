@@ -18,7 +18,11 @@
   # inline style="..." attributes (which would be a much larger refactor)
   # and the attack surface is significantly smaller — CSS injection cannot
   # exfiltrate keys the way JS injection can.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  # connect-src includes node.monero-web.com because the dashboard makes
+  # cross-origin fetch() calls to the light-wallet server (monero-lws)
+  # running on our VPS at that subdomain. Without this, CSP blocks the
+  # balance-polling and send-flow requests silently.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://node.monero-web.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
 
   # Standard hardening
   X-Content-Type-Options: nosniff
