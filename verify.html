@@ -210,6 +210,12 @@ footer p{font-size:.7rem;color:var(--text-dim)}
             <input type="password" id="bip39-pass" placeholder="Leave empty if you didn't set one" autocomplete="off" spellcheck="false" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text);outline:none">
           </div>
 
+          <div class="input-group" id="restore-height-group">
+            <label>Restore height <span class="hint">Optional · speeds up balance scanning for imported wallets</span></label>
+            <input type="text" id="restore-height" inputmode="numeric" placeholder="Block height or leave empty (auto-detected for Polyseed)" autocomplete="off" spellcheck="false" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text);outline:none">
+            <div style="font-size:.66rem;color:var(--text-dim);margin-top:5px;line-height:1.4">Your old wallet app usually shows this as "restore height" or "wallet creation height." If you don't know it, leave this empty — scanning will start from the beginning (slower but finds everything).</div>
+          </div>
+
           <div class="security-notice">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
             <p><strong>100% client-side.</strong> Your seed phrase is processed locally and never transmitted anywhere. Check the source code on GitHub.</p>

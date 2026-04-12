@@ -359,13 +359,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // from genesis.
     try {
       const opts = {};
-      if (walletKeys.seedFormat === 'polyseed' && typeof walletKeys.birthday === 'number') {
-        // Convert polyseed birthday (10-bit weeks since 2021-11-01) to
-        // an approximate block height. Monero block time is ~2 minutes,
-        // so 1 polyseed week = ~5040 blocks.
-        const POLYSEED_EPOCH_HEIGHT = 2477560; // approx height at 2021-11-01
-        opts.createdAt = POLYSEED_EPOCH_HEIGHT + walletKeys.birthday * 5040 * 2;
+
+      // Determine the best restore height from available sources:
+      // 1. User-supplied restore height (typed in the verify page)
+      // 2. Polyseed birthday (decoded from the seed)
+      // 3. No hint — scan from genesis (slow but finds everything)
+      let restoreHeight = 0;
+      if (typeof walletKeys.restoreHeight === 'number' && walletKeys.restoreHeight > 0) {
+        restoreHeight = walletKeys.restoreHeight;
+      } else if (walletKeys.seedFormat === 'polyseed' && typeof walletKeys.birthday === 'number') {
+        const POLYSEED_EPOCH_HEIGHT = 2477560;
+        restoreHeight = POLYSEED_EPOCH_HEIGHT + walletKeys.birthday * 5040 * 2;
       }
+      opts.createdAt = restoreHeight;
+
       // Newly-created wallets can skip historical scanning entirely.
       if (walletKeys.createdAtCurrentTip) opts.generatedLocally = true;
 

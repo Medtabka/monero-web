@@ -195,6 +195,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const network    = $val('network-select') || 'mainnet';
         const passphrase = $val('bip39-pass');
         const keys = await MoneroKeys.deriveFromAnyMnemonic(mnemonic, null, network, passphrase);
+        // Attach the user-supplied restore height (if any) so the dashboard
+        // can pass it to the LWS to avoid scanning from genesis.
+        const rhVal = $val('restore-height').replace(/[^0-9]/g, '');
+        if (rhVal.length > 0) {
+          keys.restoreHeight = parseInt(rhVal, 10);
+        }
         showResults(keys);
       } catch(e) {
         errorEl.textContent = 'Error: ' + e.message;
@@ -287,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
           watchOnly:          !!k.watchOnly,
           seedFormat:         k.seedFormat || null,
           birthday:           (typeof k.birthday === 'number') ? k.birthday : null,
+          restoreHeight:      (typeof k.restoreHeight === 'number') ? k.restoreHeight : null,
         }, pw);
         window.location.href = '/dashboard';
       });
