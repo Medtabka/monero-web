@@ -213,6 +213,15 @@ footer p{font-size:.65rem;color:var(--text-dim)}
           <span class="xmr-symbol">XMR</span>
         </div>
         <div class="balance-note" id="balance-note">Scanning blockchain...</div>
+        <div id="scan-bar-wrap" style="display:none;margin:10px auto 0;max-width:280px">
+          <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:100px;height:8px;overflow:hidden">
+            <div id="scan-bar-fill" style="height:100%;width:0%;background:var(--xmr);border-radius:100px;transition:width 1s ease-out"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:.62rem;font-family:'JetBrains Mono',monospace;color:var(--text-dim)">
+            <span id="scan-bar-pct">0%</span>
+            <span id="scan-bar-height">—</span>
+          </div>
+        </div>
       </div>
 
       <!-- Action buttons -->

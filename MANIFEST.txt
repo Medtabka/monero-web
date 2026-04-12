@@ -1,5 +1,5 @@
 # monero-web build manifest
-# Generated 2026-04-12T15:59:23Z from commit 6374649
+# Generated 2026-04-12T16:03:18Z from commit 98384ad
 #
 # Verify the live deployment matches a specific git tag with:
 #   git checkout v0.1.0
@@ -12,7 +12,7 @@ d68e620fbc82af942be5a8ac429a4d097fd04ff14a3fe89957a96e4acb8cea15  assets/avatar.
 130ce29960149eaf9f35ab593e70d3c03c851210c078792a4d7ed580b9d877db  assets/avatar.svg
 abb3acca2bb26bd0ec2fb8b840f141392cc58c55ab857fc9ddb584c822aae473  assets/social-card.png
 1a4cedee0f410818aad3391cc0f38fb9a36847b9eac181f97031287c06b25f19  assets/social-card.svg
-5e6bcef27bdb1d9e189c349d3a1cdd1dd1e2d408bffeed2ae035ee50b8cb06de  dashboard.html
+276304a6095cd4ba8a36c37b61da53a5940f82dfd85099612691bdb38758e5c6  dashboard.html
 a2d9e1c683d93f50460f9c99fb780717bfaeac2a77cdc198a0aba106e80910d5  donation-qr.svg
 74c3f278c6592eb0c0dce7400c3b468fbb3986f5aea469039fab49e1a347d2e6  favicon.svg
 e17cfd15fb96909d64095015f958207063a0c07191da3512df7d560a781aebdf  fonts/028edbf56089.woff2
@@ -27,7 +27,7 @@ db5ff4db83e580426280e9337a58dc57d3a83784a1b03ad80914651594441d52  fonts/c8b23d7b
 7460c6aa706ea9c2e85a05555e84f86866a870d9f2afce811ec0c990bd572946  index.html
 f5d61babe30ae09ed28b1b5183e45fbf17941fcbb208bd4c47e1abfed4494a3e  js/bip39.js
 a0bf069d19922a0df40c278c40bc82a8edc55658b587d1bb5a09b5a06ec98244  js/bip39-wordlist.js
-e973c5cc52218070991bb190ab313c9a48477eea7da632af1055dae3211a2eb4  js/dashboard-page.js
+d471eaabad5c981c6885131067dfc821ca92e0b404352676f41706f317d72790  js/dashboard-page.js
 5fd70306222d65cfa060fed66c9c1d2b77c1626320255554187d19b5f81c6d0b  js/index-page.js
 ca17e7555699565d53195a7404306ac7b9399704d80fa379b61355e5f9b19b20  js/jsqr.js
 b780f029e218e4b7c7142cfdb2161f8fb30248da8f9c022619812bc9180e7d69  js/keccak256.js

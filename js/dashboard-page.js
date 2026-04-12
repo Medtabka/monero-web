@@ -419,11 +419,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       balEl.textContent = LwsClient.formatXmr(avail);
       // Refresh tx history in parallel on the same cadence
       pollTxHistoryOnce();
+      // Drive the scanning progress bar
+      var scanWrap = document.getElementById('scan-bar-wrap');
+      var scanFill = document.getElementById('scan-bar-fill');
+      var scanPct  = document.getElementById('scan-bar-pct');
+      var scanHt   = document.getElementById('scan-bar-height');
+
       if (progress < 1) {
-        const pct = (progress * 100).toFixed(1);
-        noteEl.textContent = 'Scanning blockchain · ' + pct + '%';
+        var pct = (progress * 100).toFixed(1);
+        noteEl.textContent = 'Scanning blockchain…';
+        if (scanWrap) scanWrap.style.display = 'block';
+        if (scanFill) scanFill.style.width = pct + '%';
+        if (scanPct)  scanPct.textContent = pct + '%';
+        if (scanHt) {
+          var cur = info.scanned_block_height || info.scanned_height || 0;
+          var tip = info.blockchain_height || 0;
+          scanHt.textContent = cur.toLocaleString() + ' / ' + tip.toLocaleString();
+        }
       } else {
         noteEl.textContent = 'Up to date · last checked ' + new Date().toLocaleTimeString();
+        if (scanWrap) scanWrap.style.display = 'none';
       }
     } catch (e) {
       console.warn('[lws] poll failed:', e);
