@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let walletKeys = null;
   const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
   let idleTimer = null;
+  let scanningActive = false; // true while LWS is still scanning the chain
 
   const overlay     = document.getElementById('unlock-overlay');
   const overlayMsg  = document.getElementById('unlock-msg');
@@ -84,6 +85,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   function resetIdleTimer() {
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(autoLock, IDLE_TIMEOUT_MS);
+  }
+  // Keep the session alive while the LWS is scanning the blockchain.
+  // Without this, the 10-minute idle timeout kicks the user out during
+  // multi-hour genesis scans even though the wallet is actively working.
+  function resetIdleIfScanning() {
+    if (scanningActive) resetIdleTimer();
   }
   function autoLock() {
     // Drop the in-memory keys and reload the page. For an encrypted vault
@@ -461,6 +468,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       var scanHt   = document.getElementById('scan-bar-height');
 
       if (progress < 1) {
+        scanningActive = true;
+        resetIdleIfScanning();
         var pct = (progress * 100).toFixed(1);
         noteEl.textContent = 'Scanning blockchain…';
         if (scanWrap) scanWrap.style.display = 'block';
@@ -472,6 +481,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           scanHt.textContent = cur.toLocaleString() + ' / ' + tip.toLocaleString();
         }
       } else {
+        scanningActive = false;
         noteEl.textContent = 'Up to date · last checked ' + new Date().toLocaleTimeString();
         if (scanWrap) scanWrap.style.display = 'none';
       }
