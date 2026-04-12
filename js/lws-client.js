@@ -118,7 +118,7 @@ const LwsClient = (function () {
     return post('/login', {
       address,
       view_key: viewKey,
-      created_at:        opts.createdAt        || 0,
+      create_account:    true,
       generated_locally: !!opts.generatedLocally,
     });
   }
