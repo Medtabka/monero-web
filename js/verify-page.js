@@ -365,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 publicViewKeyHex:   k.publicViewKeyHex,
                 seedFormat:         k.seedFormat || null,
                 birthday:           (typeof k.birthday === 'number') ? k.birthday : null,
+                createdAtCurrentTip: true,
               }, pw);
               window.location.href = '/dashboard';
             });
