@@ -121,11 +121,11 @@ const LwsClient = (function () {
       create_account:    true,
       generated_locally: !!opts.generatedLocally,
     };
-    // Include start_height for imported wallets. NOTE: monero-lws 1.0-alpha
-    // ignores this field entirely — /login always registers at the current
-    // chain tip regardless. We send it anyway for forward-compatibility
-    // with newer monero-lws builds that support it. The actual historical
-    // scan is triggered separately via /import_wallet_request.
+    // Include start_height for imported wallets. NOTE: monero-lws ignores
+    // this field in /login — it always registers at the current chain tip.
+    // The actual scan-from height is set via /import_wallet_request's
+    // from_height parameter. We still send start_height here in case a
+    // future LWS build honours it at account-creation time.
     if (!opts.generatedLocally && typeof opts.createdAt === 'number' && opts.createdAt > 0) {
       body.start_height = opts.createdAt;
     } else if (!opts.generatedLocally) {
@@ -135,20 +135,23 @@ const LwsClient = (function () {
   }
 
   /**
-   * Request a full rescan from genesis for an imported wallet. Must be
-   * called AFTER login() for wallets that have existing transaction
-   * history (i.e., not freshly generated). Without this, the LWS only
-   * scans forward from the tip and misses historical transactions.
+   * Request a historical rescan for an imported wallet. Must be called
+   * AFTER login() for wallets that have existing transaction history
+   * (i.e., not freshly generated). Without this, the LWS only scans
+   * forward from the tip and misses historical transactions.
    *
-   * monero-lws treats this as a separate flow from account creation —
-   * /login creates the account, /import_wallet_request triggers the
-   * historical rescan. Both are needed for imported wallets.
+   * @param {string} address    Primary address (95 chars)
+   * @param {string} viewKey    Private view key (64 hex chars)
+   * @param {number} [fromHeight=0]  Block to start scanning from.
+   *   0 = genesis (slow but finds everything). A positive value skips
+   *   older blocks for faster sync (e.g. polyseed birthday height).
    */
-  async function importWalletRequest (address, viewKey) {
-    return post('/import_wallet_request', {
-      address,
-      view_key: viewKey,
-    });
+  async function importWalletRequest (address, viewKey, fromHeight) {
+    var body = { address, view_key: viewKey };
+    if (typeof fromHeight === 'number' && fromHeight > 0) {
+      body.from_height = fromHeight;
+    }
+    return post('/import_wallet_request', body);
   }
 
   /**

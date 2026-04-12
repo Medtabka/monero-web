@@ -419,13 +419,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Fresh wallet — no history to find, LWS starts from tip.
         console.log('[lws] fresh wallet — no historical scan needed');
       } else if (isNewAccount) {
-        // Imported wallet — trigger historical scan from genesis.
-        // This is the slow path but it's the only way to find all
-        // historical transactions with monero-lws 1.0-alpha.
-        console.log('[lws] imported wallet — requesting historical scan' +
-          (restoreHeight > 0 ? ' (restore height ' + restoreHeight + ' saved for future LWS upgrade)' : ''));
+        // Imported wallet — trigger historical scan. Pass restoreHeight
+        // so the LWS starts scanning from that block instead of genesis.
+        // If restoreHeight is 0, the LWS scans the entire chain.
+        console.log('[lws] imported wallet — requesting historical scan from ' +
+          (restoreHeight > 0 ? 'block ' + restoreHeight : 'genesis'));
         try {
-          await LwsClient.importWalletRequest(walletKeys.address, walletKeys.privateViewKeyHex);
+          await LwsClient.importWalletRequest(walletKeys.address, walletKeys.privateViewKeyHex, restoreHeight);
         } catch (e) {
           console.warn('[lws] import request failed (non-fatal):', e);
         }
