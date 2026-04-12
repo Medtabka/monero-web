@@ -476,9 +476,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (scanFill) scanFill.style.width = pct + '%';
         if (scanPct)  scanPct.textContent = pct + '%';
         if (scanHt) {
-          var cur = info.scanned_block_height || info.scanned_height || 0;
-          var tip = info.blockchain_height || 0;
-          scanHt.textContent = cur.toLocaleString() + ' / ' + tip.toLocaleString();
+          var cur   = info.scanned_block_height || info.scanned_height || 0;
+          var tip   = info.blockchain_height || 0;
+          var start = info.start_height || 0;
+          // Show blocks scanned relative to the start point, not absolute
+          // heights. "12,300 / 639,227 blocks" is clearer than
+          // "3,024,100 / 3,651,027" when scanning from a restore height.
+          var done  = Math.max(0, cur - start);
+          var total = Math.max(1, tip - start);
+          scanHt.textContent = done.toLocaleString() + ' / ' + total.toLocaleString() + ' blocks';
         }
       } else {
         scanningActive = false;
