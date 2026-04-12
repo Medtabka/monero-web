@@ -373,23 +373,54 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       opts.createdAt = restoreHeight;
 
-      // Newly-created wallets can skip historical scanning entirely.
-      if (walletKeys.createdAtCurrentTip) opts.generatedLocally = true;
+      // Detect freshly-created wallets via a sessionStorage flag set by
+      // the Create New flow on verify-page.js. This is separate from the
+      // encrypted vault and doesn't depend on the verify-page's JS being
+      // cache-fresh — any version of the create flow that writes this key
+      // triggers the "skip scanning" path.
+      var freshFlag = false;
+      try { freshFlag = sessionStorage.getItem('monero-web-fresh-wallet') === '1'; } catch (e) {}
+      if (freshFlag) {
+        opts.generatedLocally = true;
+        try { sessionStorage.removeItem('monero-web-fresh-wallet'); } catch (e) {}
+      }
 
-      await LwsClient.login(walletKeys.address, walletKeys.privateViewKeyHex, opts);
+      var loginRes = await LwsClient.login(walletKeys.address, walletKeys.privateViewKeyHex, opts);
       lwsRegistered = true;
 
-      // For imported wallets (not freshly generated), request a full
-      // historical rescan. Without this, monero-lws only scans forward
-      // from the tip and misses existing transactions. The /import
-      // endpoint is idempotent — calling it on an already-imported
-      // wallet is a no-op.
-      if (!opts.generatedLocally) {
+      // Decide whether to trigger a historical rescan based on the LWS
+      // response + what we know about the wallet, NOT a cache-dependent
+      // flag from the verify page:
+      //
+      // - new_address=true + no restoreHeight + no birthday → freshly
+      //   created wallet, no history to scan. The LWS starts from the
+      //   tip. Do NOT call /import (that would reset to genesis).
+      //
+      // - new_address=true + has restoreHeight or birthday → imported
+      //   wallet with known age. Call /import to trigger a rescan, then
+      //   ideally the LWS would start from the restore height.
+      //
+      // - new_address=false → account already exists on the LWS from a
+      //   previous session. Don't re-import; the scan is already running
+      //   or done.
+      var isNewAccount = loginRes && loginRes.new_address === true;
+      var hasHistory = restoreHeight > 0 ||
+                       (walletKeys.seedFormat === 'polyseed' && typeof walletKeys.birthday === 'number') ||
+                       walletKeys.restoreHeight > 0;
+
+      if (isNewAccount && hasHistory) {
+        // Imported wallet, first time on the LWS — trigger historical scan
         try {
           await LwsClient.importWalletRequest(walletKeys.address, walletKeys.privateViewKeyHex);
         } catch (e) {
           console.warn('[lws] import request failed (non-fatal):', e);
         }
+      } else if (isNewAccount && !hasHistory) {
+        // Freshly created wallet — no scan needed, LWS starts from tip
+        console.log('[lws] new wallet, no history — skipping import');
+      } else {
+        // Existing account — scan already in progress or done
+        console.log('[lws] existing account — not re-importing');
       }
     } catch (e) {
       // Server unreachable or refused. Show the note but don't break.

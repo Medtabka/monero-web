@@ -367,6 +367,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 birthday:           (typeof k.birthday === 'number') ? k.birthday : null,
                 createdAtCurrentTip: true,
               }, pw);
+              // Signal the dashboard that this is a freshly-created wallet
+              // so it tells the LWS to start from the tip (no history scan).
+              // Uses a separate sessionStorage key (not the vault) so it
+              // works regardless of which version of this JS the browser has.
+              try { sessionStorage.setItem('monero-web-fresh-wallet', '1'); } catch (e) {}
               window.location.href = '/dashboard';
             });
           }
