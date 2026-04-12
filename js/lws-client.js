@@ -115,12 +115,24 @@ const LwsClient = (function () {
    */
   async function login (address, viewKey, opts) {
     opts = opts || {};
-    return post('/login', {
+    var body = {
       address,
       view_key: viewKey,
       create_account:    true,
       generated_locally: !!opts.generatedLocally,
-    });
+    };
+    // For imported wallets (not generated locally), include start_height
+    // so the LWS knows to scan from that block instead of defaulting to
+    // the current tip. Without this, historical transactions are invisible.
+    if (!opts.generatedLocally && typeof opts.createdAt === 'number' && opts.createdAt > 0) {
+      body.start_height = opts.createdAt;
+    } else if (!opts.generatedLocally) {
+      // No birthday known — scan from genesis to catch everything.
+      // This is slow for old wallets but correct. The LWS caches the
+      // result so subsequent logins are instant.
+      body.start_height = 0;
+    }
+    return post('/login', body);
   }
 
   /**
