@@ -156,10 +156,31 @@ const MoneroSend = (function () {
           req.use_dust === true || req.use_dust === 'true'
         ).then(function (res) {
           console.log('[send] got unspent outs, outputs count:', (res.outputs||[]).length);
-          console.log('[send] unspent outs full response:', JSON.stringify(res));
           try {
-            // The WASM expects the unspent outs wrapped in {task_id, res}
-            // where res matches the MyMonero get_unspent_outs response format
+            // Normalize the LWS response to match the MyMonero format
+            // the WASM expects. Key differences:
+            // - per_byte_fee → per_kb_fee (multiply by 1024)
+            // - numeric fields → strings where expected
+            if (res.per_byte_fee && !res.per_kb_fee) {
+              res.per_kb_fee = String(Number(res.per_byte_fee) * 1024);
+            }
+            if (typeof res.per_kb_fee === 'number') {
+              res.per_kb_fee = String(res.per_kb_fee);
+            }
+            if (typeof res.fee_mask === 'number') {
+              res.fee_mask = String(res.fee_mask);
+            }
+            // Ensure output fields are strings where the WASM expects them
+            if (Array.isArray(res.outputs)) {
+              for (var oi = 0; oi < res.outputs.length; oi++) {
+                var o = res.outputs[oi];
+                if (typeof o.amount === 'number') o.amount = String(o.amount);
+                if (typeof o.global_index === 'number') o.global_index = String(o.global_index);
+                if (typeof o.index === 'number') o.index = String(o.index);
+                if (typeof o.tx_id === 'number') o.tx_id = String(o.tx_id);
+                if (typeof o.height === 'number') o.height = String(o.height);
+              }
+            }
             var cbArg = JSON.stringify({ task_id: taskId, res: res });
             console.log('[send] calling send_cb_I, exists:', typeof mod.send_cb_I__got_unspent_outs);
             var retStr = mod.send_cb_I__got_unspent_outs(cbArg);
