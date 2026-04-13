@@ -389,12 +389,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 2. Vault flag createdAtCurrentTip (survives page refresh)
       var freshFlag = false;
       try { freshFlag = sessionStorage.getItem('monero-web-fresh-wallet') === '1'; } catch (e) {}
-      console.log('[lws] sessionStorage fresh flag:', freshFlag);
-      console.log('[lws] vault createdAtCurrentTip:', walletKeys.createdAtCurrentTip);
       if (!freshFlag && walletKeys.createdAtCurrentTip === true) {
         freshFlag = true;
       }
-      console.log('[lws] final freshFlag:', freshFlag);
       if (freshFlag) {
         opts.generatedLocally = true;
         try { sessionStorage.removeItem('monero-web-fresh-wallet'); } catch (e) {}
