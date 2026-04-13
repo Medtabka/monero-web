@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // or AES-GCM encrypted with a session password. The unlock overlay handles
   // both initial unlock and re-unlock after idle auto-lock.
   let walletKeys = null;
-  const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+  const IDLE_TIMEOUT_MS = 3 * 60 * 60 * 1000; // 3 hours
   let idleTimer = null;
   let scanningActive = false; // true while LWS is still scanning the chain
 
