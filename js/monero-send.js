@@ -155,7 +155,7 @@ const MoneroSend = (function () {
 
     // 4. Normalize output formats for WASM
     var wasmOutputs = selectedOuts.map(function (o) {
-      return {
+      var out = {
         amount: String(o.amount),
         public_key: o.public_key,
         index: String(o.index || 0),
@@ -163,11 +163,22 @@ const MoneroSend = (function () {
         tx_pub_key: o.tx_pub_key,
         rct: o.rct || '',
       };
+      if (o.spend_key_images) out.spend_key_images = o.spend_key_images;
+      if (o.tx_id !== undefined) out.tx_id = String(o.tx_id);
+      if (o.tx_hash) out.tx_hash = o.tx_hash;
+      if (o.tx_prefix_hash) out.tx_prefix_hash = o.tx_prefix_hash;
+      if (o.height !== undefined) out.height = String(o.height);
+      if (o.timestamp) out.timestamp = o.timestamp;
+      if (o.recipient) out.recipient = o.recipient;
+      return out;
     });
+    console.log('[send] first output sample:', JSON.stringify(wasmOutputs[0]).slice(0, 200));
 
     // 5. Build and sign via WASM (synchronous — no async callbacks)
     console.log('[send] signing tx: amount=' + amountAtomic + ' fee=' + feeAmount + ' change=' + changeAmount);
-    var step2Result = MoneroCore.sendStep2({
+    console.log('[send] outputs to sign:', wasmOutputs.length, 'decoy sets:', mixResp.amount_outs.length);
+
+    var step2Params = {
       from_address_string: walletKeys.address,
       sec_viewKey_string: walletKeys.privateViewKeyHex,
       sec_spendKey_string: walletKeys.privateSpendKeyHex,
@@ -182,9 +193,31 @@ const MoneroSend = (function () {
       fake_outputs_count: DEFAULT_MIXIN,
       unlock_time: '0',
       nettype_string: 'MAINNET',
-    });
+    };
+
+    var step2Result;
+    try {
+      step2Result = MoneroCore.sendStep2(step2Params);
+    } catch (e) {
+      var msg = 'Transaction signing failed';
+      if (typeof e === 'number') {
+        // WASM C++ exception — try to read error string
+        try {
+          var mod = MoneroCore._getModule ? MoneroCore._getModule() : null;
+          if (mod && mod.UTF8ToString) msg = mod.UTF8ToString(e) || msg;
+        } catch (x) {}
+        console.error('[send] WASM signing exception (ptr ' + e + '):', msg);
+      } else if (e && e.message) {
+        msg = e.message;
+        console.error('[send] signing error:', msg);
+      } else {
+        console.error('[send] signing error (raw):', e);
+      }
+      throw new Error(msg);
+    }
 
     if (!step2Result || !step2Result.serialized_signed_tx) {
+      console.error('[send] step2 returned:', JSON.stringify(step2Result));
       throw new Error('Transaction signing failed — no signed output');
     }
 

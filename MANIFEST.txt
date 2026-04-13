@@ -1,5 +1,5 @@
 # monero-web build manifest
-# Generated 2026-04-13T14:21:26Z from commit f843956
+# Generated 2026-04-13T14:25:14Z from commit 35b0e0e
 #
 # Verify the live deployment matches a specific git tag with:
 #   git checkout v0.1.0
@@ -36,7 +36,7 @@ fda27fcb4acfbf96ed719347ef6f996ba52c757ec72cffde7c61dc6ff084b3f8  js/lws-client.
 d5809ca4685de99f36ca8f14650ce73b1ed5abfa196a75a1d225a0e82ceb006d  js/monero-english-wordlist.js
 329d5bf353b857d92d66f28ffbd3bf2956f8263c190fd8969788475f2c6454f4  js/monero-keys.js
 c12981f69fb709985eb27ff814a1e0c9258462426ef3873ab3551c16acc5b449  js/monero-rpc.js
-f44cbe4215a7089acc7d686ae52dd3dfbce9c50e643fbb5d076741f746628ba4  js/monero-send.js
+38bcbb110947605a9072836f34730fb2d99aecea594218350ecb2fb1f77b924c  js/monero-send.js
 36726c9b7d217caf379bc5d69c43480ffd90490ca2477ed51807544308d56426  js/monero-subaddress.js
 9a0792500d640b96faf138f867576179ab259ff4122e9e309a7a996877fde406  js/monero-wordlist.js
 14eaa392557c1ec8501eef6fa6c568f1adf341a0b745236c114799acaea80e91  js/monero-wordlists-all.js
@@ -47,7 +47,7 @@ c8889ee4b0e8f9754d8b283edd36fc0012d52db5244278ad71fc341b8d8316ca  js/mymonero-co
 cee586c946cb838f590db096c8f3d89e58a9c0ec81393f421cfed0fadf3a6c06  js/mymonero-core/MyMoneroCoreCpp_WASM.js
 bf22b13d1187c01fe962b65098e47c9fbd29555eef224e91adeaf30c3d4fc155  js/mymonero-core/MyMoneroCoreCpp_WASM.wasm
 3e30e3f371cf1669f8c114ba0b9440657ed6486b7d47bfefb9d5d05fa28842b2  js/mymonero-core/README.md
-62d72c70a18da4d2aff9e1ab0544914b7c7bb7873038e9039701697d243233a5  js/mymonero-loader.js
+2e74152811ec25c6ca7409f5693e9e05c8761544528ac6bc8de1173b64d6c749  js/mymonero-loader.js
 1fea789d0d94133b6e12ef50408a13bf66d1d4298eb0ab2411d79400b5a3999e  js/polyseed.js
 5f5e2c80f5ba8b2b68d771fc44da7b5fd4a3e256526f78f985644f99e0df84c4  js/qrcodegen.js
 4695ae6ccba75eb2775e6eadab605cad283256ba1866fe78f458baf65b5a5f85  js/qr-scanner.js
