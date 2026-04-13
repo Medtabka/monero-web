@@ -485,6 +485,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       const avail = LwsClient.availableBalance(info);
       const progress = LwsClient.scanProgress(info);
       balEl.textContent = LwsClient.formatXmr(avail);
+
+      // Show locked (pending) balance if there is one
+      var locked = BigInt(info.locked_funds || '0');
+      var lockedEl = document.getElementById('balance-locked');
+      if (locked > 0n) {
+        if (!lockedEl) {
+          lockedEl = document.createElement('div');
+          lockedEl.id = 'balance-locked';
+          lockedEl.style.cssText = 'font-size:.72rem;color:var(--warning);margin-top:2px;font-family:"JetBrains Mono",monospace';
+          balEl.parentNode.insertBefore(lockedEl, balEl.nextSibling);
+        }
+        lockedEl.textContent = '+ ' + LwsClient.formatXmr(locked) + ' XMR locked (confirming)';
+        lockedEl.style.display = 'block';
+      } else if (lockedEl) {
+        lockedEl.style.display = 'none';
+      }
+
       // Refresh tx history in parallel on the same cadence
       pollTxHistoryOnce();
       // Drive the scanning progress bar
