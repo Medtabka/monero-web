@@ -112,11 +112,17 @@ const MoneroSend = (function () {
         (unspentResp ? (unspentResp.outputs ? unspentResp.outputs.length : 'no outputs field') : 'null') + ')');
     }
 
-    // Use all outputs from the LWS. The LWS may include outputs with
-    // spend_key_images (potential spends), but many are false positives
-    // from ring-decoy detection. The WASM will skip actually-spent outputs
-    // during tx construction, and the network rejects double-spends.
-    var spendableOuts = unspentResp.outputs;
+    // Prefer outputs with NO spend_key_images (definitely unspent).
+    // Outputs with spend_key_images MIGHT be spent (real or false positive
+    // from ring decoys). Use them only as a fallback if we don't have
+    // enough clean outputs.
+    var cleanOuts = unspentResp.outputs.filter(function (o) {
+      return !o.spend_key_images || o.spend_key_images.length === 0;
+    });
+    var dirtyOuts = unspentResp.outputs.filter(function (o) {
+      return o.spend_key_images && o.spend_key_images.length > 0;
+    });
+    var spendableOuts = cleanOuts.length > 0 ? cleanOuts : dirtyOuts;
 
     // 2. Select outputs to spend (simple: use all, let WASM compute change)
     var perByteFee = Number(unspentResp.per_byte_fee || unspentResp.per_kb_fee / 1024 || 20);
