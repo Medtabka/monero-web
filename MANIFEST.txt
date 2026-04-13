@@ -1,5 +1,5 @@
 # monero-web build manifest
-# Generated 2026-04-13T15:57:58Z from commit e6a968a
+# Generated 2026-04-13T16:09:18Z from commit 618ee4e
 #
 # Verify the live deployment matches a specific git tag with:
 #   git checkout v0.1.0
@@ -12,7 +12,7 @@ d68e620fbc82af942be5a8ac429a4d097fd04ff14a3fe89957a96e4acb8cea15  assets/avatar.
 130ce29960149eaf9f35ab593e70d3c03c851210c078792a4d7ed580b9d877db  assets/avatar.svg
 abb3acca2bb26bd0ec2fb8b840f141392cc58c55ab857fc9ddb584c822aae473  assets/social-card.png
 1a4cedee0f410818aad3391cc0f38fb9a36847b9eac181f97031287c06b25f19  assets/social-card.svg
-9a30f4c0305b625436aabba229c4be443e48d80418f1f005f022912e47f4c52e  dashboard.html
+49ec2f2457ee2e6274d4f61ef89a5ed01dcdf2b451951bc105e1c09b953343aa  dashboard.html
 a2d9e1c683d93f50460f9c99fb780717bfaeac2a77cdc198a0aba106e80910d5  donation-qr.svg
 74c3f278c6592eb0c0dce7400c3b468fbb3986f5aea469039fab49e1a347d2e6  favicon.svg
 e17cfd15fb96909d64095015f958207063a0c07191da3512df7d560a781aebdf  fonts/028edbf56089.woff2
@@ -27,7 +27,7 @@ db5ff4db83e580426280e9337a58dc57d3a83784a1b03ad80914651594441d52  fonts/c8b23d7b
 7460c6aa706ea9c2e85a05555e84f86866a870d9f2afce811ec0c990bd572946  index.html
 f5d61babe30ae09ed28b1b5183e45fbf17941fcbb208bd4c47e1abfed4494a3e  js/bip39.js
 a0bf069d19922a0df40c278c40bc82a8edc55658b587d1bb5a09b5a06ec98244  js/bip39-wordlist.js
-20011125049484f5fd447188bfa466d9567f3e795e3261f6d7d0235212ff5d09  js/dashboard-page.js
+18a5dceeb2b949cd855339f4ef153cfcf35300421c92c37234cc5ffd5b2514c7  js/dashboard-page.js
 5fd70306222d65cfa060fed66c9c1d2b77c1626320255554187d19b5f81c6d0b  js/index-page.js
 ca17e7555699565d53195a7404306ac7b9399704d80fa379b61355e5f9b19b20  js/jsqr.js
 b780f029e218e4b7c7142cfdb2161f8fb30248da8f9c022619812bc9180e7d69  js/keccak256.js
@@ -36,7 +36,7 @@ fda27fcb4acfbf96ed719347ef6f996ba52c757ec72cffde7c61dc6ff084b3f8  js/lws-client.
 d5809ca4685de99f36ca8f14650ce73b1ed5abfa196a75a1d225a0e82ceb006d  js/monero-english-wordlist.js
 329d5bf353b857d92d66f28ffbd3bf2956f8263c190fd8969788475f2c6454f4  js/monero-keys.js
 c12981f69fb709985eb27ff814a1e0c9258462426ef3873ab3551c16acc5b449  js/monero-rpc.js
-5bdbd1f58d2c2f8d73305741bbcc27a7e3ca59b57fb1f7ae3c9d334e817d9745  js/monero-send.js
+1351727d1ace6393f41d7df46a958b8c58850fb531e7a4f531ca9adc1c48e0f7  js/monero-send.js
 36726c9b7d217caf379bc5d69c43480ffd90490ca2477ed51807544308d56426  js/monero-subaddress.js
 9a0792500d640b96faf138f867576179ab259ff4122e9e309a7a996877fde406  js/monero-wordlist.js
 14eaa392557c1ec8501eef6fa6c568f1adf341a0b745236c114799acaea80e91  js/monero-wordlists-all.js
@@ -47,7 +47,7 @@ c8889ee4b0e8f9754d8b283edd36fc0012d52db5244278ad71fc341b8d8316ca  js/mymonero-co
 cee586c946cb838f590db096c8f3d89e58a9c0ec81393f421cfed0fadf3a6c06  js/mymonero-core/MyMoneroCoreCpp_WASM.js
 bf22b13d1187c01fe962b65098e47c9fbd29555eef224e91adeaf30c3d4fc155  js/mymonero-core/MyMoneroCoreCpp_WASM.wasm
 3e30e3f371cf1669f8c114ba0b9440657ed6486b7d47bfefb9d5d05fa28842b2  js/mymonero-core/README.md
-878fbdf9d3536806be580f20fcbaa1cb27c919c06dd07b7514ea113c4cb90daf  js/mymonero-loader.js
+ecbb9fca8238f7c0fe3edf2d7901fe4e2501e96512c68901225cc8180119eccd  js/mymonero-loader.js
 1fea789d0d94133b6e12ef50408a13bf66d1d4298eb0ab2411d79400b5a3999e  js/polyseed.js
 5f5e2c80f5ba8b2b68d771fc44da7b5fd4a3e256526f78f985644f99e0df84c4  js/qrcodegen.js
 4695ae6ccba75eb2775e6eadab605cad283256ba1866fe78f458baf65b5a5f85  js/qr-scanner.js

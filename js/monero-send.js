@@ -94,7 +94,11 @@ const MoneroSend = (function () {
   // ── Send transaction ──────────────────────────────────────────────
 
   async function send (walletKeys, toAddress, xmrAmount, priority, paymentId, preview) {
-    await MoneroCore.load();
+    try {
+      await MoneroCore.load();
+    } catch (e) {
+      throw new Error('Transaction signing requires a component that could not load. Try disabling ad blockers or use a different browser.');
+    }
 
     var amountAtomic = BigInt(xmrToAtomic(xmrAmount));
 
@@ -110,17 +114,38 @@ const MoneroSend = (function () {
         (unspentResp ? (unspentResp.outputs ? unspentResp.outputs.length : 'no outputs field') : 'null') + ')');
     }
 
-    // Prefer outputs with NO spend_key_images (definitely unspent).
-    // Outputs with spend_key_images MIGHT be spent (real or false positive
-    // from ring decoys). Use them only as a fallback if we don't have
-    // enough clean outputs.
-    var cleanOuts = unspentResp.outputs.filter(function (o) {
-      return !o.spend_key_images || o.spend_key_images.length === 0;
-    });
-    var dirtyOuts = unspentResp.outputs.filter(function (o) {
-      return o.spend_key_images && o.spend_key_images.length > 0;
-    });
-    var spendableOuts = cleanOuts.length > 0 ? cleanOuts : dirtyOuts;
+    // Verify which outputs are actually spendable using key_image
+    // verification. Outputs with spend_key_images may be falsely flagged
+    // (ring decoy appearances). Compute the real key_image and check.
+    var spendableOuts = [];
+    for (var oi = 0; oi < unspentResp.outputs.length; oi++) {
+      var o = unspentResp.outputs[oi];
+      if (!o.spend_key_images || o.spend_key_images.length === 0) {
+        // No spend reports — definitely unspent
+        spendableOuts.push(o);
+      } else {
+        // Has spend reports — verify with key_image
+        try {
+          var realKI = MoneroCore.generateKeyImage(
+            o.tx_pub_key,
+            walletKeys.privateViewKeyHex,
+            walletKeys.publicSpendKeyHex,
+            walletKeys.privateSpendKeyHex,
+            o.index
+          );
+          // If the real key_image is NOT in the spend list, the output
+          // is unspent (the reports are false positives from ring decoys)
+          var isSpent = o.spend_key_images.indexOf(realKI) >= 0;
+          if (!isSpent) spendableOuts.push(o);
+        } catch (e) {
+          // Key_image computation failed — skip this output to be safe
+        }
+      }
+    }
+
+    if (spendableOuts.length === 0) {
+      throw new Error('No spendable outputs available. Your funds may still be confirming — wait a few minutes and try again.');
+    }
 
     // 2. Select outputs to spend (simple: use all, let WASM compute change)
     var perByteFee = Number(unspentResp.per_byte_fee || unspentResp.per_kb_fee / 1024 || 20);
@@ -224,9 +249,23 @@ const MoneroSend = (function () {
     }
 
     // 6. Broadcast
-    var broadcastResp = await LwsClient.submitRawTx(step2Result.serialized_signed_tx);
-    if (!broadcastResp || broadcastResp.status !== 'OK') {
-      throw new Error('Broadcast rejected: ' + (broadcastResp && broadcastResp.error || 'unknown'));
+    try {
+      var broadcastResp = await LwsClient.submitRawTx(step2Result.serialized_signed_tx);
+      if (!broadcastResp || broadcastResp.status !== 'OK') {
+        var reason = (broadcastResp && broadcastResp.error) || 'unknown';
+        throw new Error(reason);
+      }
+    } catch (bcErr) {
+      var errMsg = bcErr.message || String(bcErr);
+      if (/double.spend|already.spent/i.test(errMsg)) {
+        throw new Error('Transaction rejected — an output was already spent. Wait a few minutes for confirmations and try again.');
+      } else if (/fee.too.low/i.test(errMsg)) {
+        throw new Error('Transaction fee is too low. Try a higher priority.');
+      } else if (/network|reach|timeout/i.test(errMsg)) {
+        throw new Error('Could not reach the wallet server. Check your connection and try again.');
+      } else {
+        throw new Error('Broadcast failed: ' + errMsg + '. Your funds have not been sent.');
+      }
     }
 
     return {

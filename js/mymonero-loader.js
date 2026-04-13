@@ -31,14 +31,14 @@ const MoneroCore = (function () {
   const WASM_DIR = '/js/mymonero-core/';
   let _module = null;
   let _loadingPromise = null;
+  let _loadError = null;
 
   function isLoaded () { return _module !== null; }
+  function loadError () { return _loadError; }
 
   /**
-   * Instantiate the Emscripten-generated module. The upstream JS file
-   * exposes itself as `window.MyMoneroClient` (a factory). We call it
-   * with a `locateFile` callback that resolves the .wasm path relative
-   * to our vendored directory.
+   * Instantiate the Emscripten-generated module. Retries on failure
+   * (e.g. if the first attempt failed due to a race condition).
    */
   async function load () {
     if (_module) return _module;
@@ -46,25 +46,22 @@ const MoneroCore = (function () {
 
     _loadingPromise = (async () => {
       if (typeof MyMoneroClient !== 'function') {
-        // The loader script (js/mymonero-core/MyMoneroCoreCpp_WASM.js) must
-        // be added to the page via a <script> tag BEFORE mymonero-loader.js
-        // is used. If it isn't, fail loudly.
-        throw new Error(
-          'mymonero-loader: MyMoneroClient global is missing. Include ' +
-          '<script src="js/mymonero-core/MyMoneroCoreCpp_WASM.js"></script> ' +
-          'before calling MoneroCore.load().'
-        );
+        _loadError = 'MyMoneroClient not available — script not loaded or blocked by browser';
+        throw new Error(_loadError);
       }
-
-      _module = await MyMoneroClient({
-        locateFile: function (filename) {
-          // Tell Emscripten to fetch the .wasm binary from our vendored path
-          // instead of the script directory (which would be wrong when the
-          // JS file is loaded via a relative <script src>).
-          return WASM_DIR + filename;
-        },
-      });
-      return _module;
+      try {
+        _module = await MyMoneroClient({
+          locateFile: function (filename) {
+            return WASM_DIR + filename;
+          },
+        });
+        _loadError = null;
+        return _module;
+      } catch (e) {
+        _loadError = e.message || 'WASM module failed to load';
+        _loadingPromise = null; // allow retry on next call
+        throw e;
+      }
     })();
 
     return _loadingPromise;

@@ -116,6 +116,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   function initDashboard() {
     document.getElementById('loading-state').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
+    // Preload WASM in background so it's ready for key_image verification
+    // and send. Don't await — let it load while the dashboard connects.
+    if (typeof MoneroCore !== 'undefined') {
+      MoneroCore.load().catch(function () {}); // fire-and-forget
+    }
     populateWallet();
     installIdleListeners();
   }
@@ -500,8 +505,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('[lws] filtered ' + falseSpendTotal.toString() + ' piconero of false spends');
           }
         } catch (e) {
-          // WASM failed to load — fall back to dedup only
-          console.warn('[lws] key_image verification unavailable, using dedup:', e.message);
+          // WASM failed to load — use heuristic fallbacks
+          console.warn('[lws] key_image verification unavailable:', e.message);
+          var totalRecv = BigInt(info.total_received || '0');
+          var totalSent = BigInt(info.total_sent || '0');
+
+          // Heuristic 1: dedup by (tx_pub_key, out_index) — same output
+          // can't be spent more than once
           if (info.spent_outputs.length > 1) {
             var seen = {};
             var dedupTotal = 0n;
@@ -514,11 +524,18 @@ document.addEventListener('DOMContentLoaded', async () => {
               }
             }
             if (dedupTotal > 0n) {
-              var correctedSent = BigInt(info.total_sent || '0') - dedupTotal;
-              if (correctedSent < 0n) correctedSent = 0n;
-              info.total_sent = correctedSent.toString();
+              totalSent -= dedupTotal;
+              if (totalSent < 0n) totalSent = 0n;
             }
           }
+
+          // Heuristic 2: total_sent can never exceed total_received
+          // (you can't spend more than you received). Clamp it.
+          if (totalSent > totalRecv) {
+            totalSent = totalRecv;
+          }
+
+          info.total_sent = totalSent.toString();
         }
       }
 
