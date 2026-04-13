@@ -1,5 +1,5 @@
 # monero-web build manifest
-# Generated 2026-04-13T13:34:55Z from commit 670a983
+# Generated 2026-04-13T13:39:00Z from commit b6f764a
 #
 # Verify the live deployment matches a specific git tag with:
 #   git checkout v0.1.0
@@ -12,7 +12,7 @@ d68e620fbc82af942be5a8ac429a4d097fd04ff14a3fe89957a96e4acb8cea15  assets/avatar.
 130ce29960149eaf9f35ab593e70d3c03c851210c078792a4d7ed580b9d877db  assets/avatar.svg
 abb3acca2bb26bd0ec2fb8b840f141392cc58c55ab857fc9ddb584c822aae473  assets/social-card.png
 1a4cedee0f410818aad3391cc0f38fb9a36847b9eac181f97031287c06b25f19  assets/social-card.svg
-da25125719950c56ed4d7963475134d216cbf2249ee4f0e7613028ed952f572c  dashboard.html
+9a30f4c0305b625436aabba229c4be443e48d80418f1f005f022912e47f4c52e  dashboard.html
 a2d9e1c683d93f50460f9c99fb780717bfaeac2a77cdc198a0aba106e80910d5  donation-qr.svg
 74c3f278c6592eb0c0dce7400c3b468fbb3986f5aea469039fab49e1a347d2e6  favicon.svg
 e17cfd15fb96909d64095015f958207063a0c07191da3512df7d560a781aebdf  fonts/028edbf56089.woff2
