@@ -351,7 +351,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // dashboard.
   let balancePollTimer = null;
   let lwsRegistered = false;
-  var _keyImageCache = {};  // tx_pub_key:out_index → computed key_image
 
   async function startBalancePolling () {
     const balEl  = document.getElementById('balance-xmr');
@@ -458,44 +457,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const info = await LwsClient.getAddressInfo(walletKeys.address, walletKeys.privateViewKeyHex);
 
-      // ── Client-side key_image verification ──
-      // The LWS can produce false spend detections: it sees the wallet's
-      // output as a ring decoy in someone else's transaction and flags it
-      // as "spent". We fix this by computing the REAL key_image for each
-      // reported spent output using the spend key (which the LWS doesn't
-      // have). If the LWS-reported key_image doesn't match, it's a false
-      // positive and we subtract it from total_sent.
-      if (info && Array.isArray(info.spent_outputs) && info.spent_outputs.length > 0
-          && walletKeys.privateSpendKeyHex && !walletKeys.watchOnly) {
-        var falseSpendTotal = 0n;
-        try {
-          for (var so of info.spent_outputs) {
-            var cacheKey = so.tx_pub_key + ':' + so.out_index;
-            if (!_keyImageCache[cacheKey]) {
-              if (!MoneroCore.isLoaded()) await MoneroCore.load();
-              _keyImageCache[cacheKey] = MoneroCore.generateKeyImage(
-                so.tx_pub_key,
-                walletKeys.privateViewKeyHex,
-                walletKeys.publicSpendKeyHex,
-                walletKeys.privateSpendKeyHex,
-                so.out_index
-              );
-            }
-            if (_keyImageCache[cacheKey] !== so.key_image) {
-              falseSpendTotal += BigInt(so.amount || '0');
-              console.log('[lws] false spend detected: key_image ' +
-                so.key_image.slice(0, 16) + '… does not match computed ' +
-                _keyImageCache[cacheKey].slice(0, 16) + '…');
-            }
+      // ── Deduplicate spent_outputs ──
+      // The LWS can report the same output as spent multiple times when
+      // the output appears as a ring decoy in different transactions.
+      // Since a Monero output can only be spent ONCE, we deduplicate by
+      // (tx_pub_key, out_index) and only count each output as spent once.
+      // This corrects the inflated total_sent that causes zero balances.
+      if (info && Array.isArray(info.spent_outputs) && info.spent_outputs.length > 1) {
+        var seen = {};
+        var dedupTotal = 0n;
+        for (var so of info.spent_outputs) {
+          var key = so.tx_pub_key + ':' + so.out_index;
+          if (seen[key]) {
+            dedupTotal += BigInt(so.amount || '0');
+          } else {
+            seen[key] = true;
           }
-          if (falseSpendTotal > 0n) {
-            // Correct total_sent by subtracting false spends
-            var correctedSent = BigInt(info.total_sent || '0') - falseSpendTotal;
-            if (correctedSent < 0n) correctedSent = 0n;
-            info.total_sent = correctedSent.toString();
-          }
-        } catch (e) {
-          console.warn('[lws] key_image verification failed (non-fatal):', e);
+        }
+        if (dedupTotal > 0n) {
+          var correctedSent = BigInt(info.total_sent || '0') - dedupTotal;
+          if (correctedSent < 0n) correctedSent = 0n;
+          info.total_sent = correctedSent.toString();
+          console.log('[lws] deduped ' + dedupTotal.toString() + ' piconero of double-counted spends');
         }
       }
 
@@ -553,21 +536,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       var txs = (resp && Array.isArray(resp.transactions)) ? resp.transactions : [];
       const chainTip = (resp && resp.blockchain_height) || 0;
 
-      // Filter out transactions that consist entirely of false spends.
-      // A false spend is one where every spent_output's key_image doesn't
-      // match the real key_image we computed in pollBalanceOnce().
-      if (Object.keys(_keyImageCache).length > 0) {
-        txs = txs.filter(function (tx) {
-          if (!tx.spent_outputs || tx.spent_outputs.length === 0) return true;
-          // Keep the tx if at least one spent_output has a verified key_image
-          for (var so of tx.spent_outputs) {
-            var cacheKey = so.tx_pub_key + ':' + so.out_index;
-            var real = _keyImageCache[cacheKey];
-            if (!real || real === so.key_image) return true;
+      // Deduplicate transactions that spend the same output multiple
+      // times (ring-decoy false positives). Keep the first occurrence
+      // of each spent output and drop later duplicates.
+      var seenSpentOutputs = {};
+      txs = txs.filter(function (tx) {
+        if (!tx.spent_outputs || tx.spent_outputs.length === 0) return true;
+        var hasNew = false;
+        for (var so of tx.spent_outputs) {
+          var key = so.tx_pub_key + ':' + so.out_index;
+          if (!seenSpentOutputs[key]) {
+            seenSpentOutputs[key] = true;
+            hasNew = true;
           }
-          return false; // all spent_outputs are false positives — hide this tx
-        });
-      }
+        }
+        return hasNew; // drop tx if all its spent_outputs were already seen
+      });
 
       if (txs.length === 0) {
         listEl.innerHTML = '<div class="key-card" style="text-align:center;color:var(--text-dim);font-size:.75rem;padding:18px">No transactions yet. Receive some XMR and it\'ll show up here.</div>';
