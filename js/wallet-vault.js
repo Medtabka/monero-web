@@ -61,6 +61,12 @@ const WalletVault = (function () {
    * in plaintext (encrypted:false). Otherwise they are AES-GCM encrypted.
    */
   async function store(keys, password) {
+    // If this is a freshly-created wallet, set the sessionStorage flag
+    // here so it's impossible to miss regardless of which UI button
+    // triggers the store.
+    if (keys && keys.createdAtCurrentTip) {
+      try { sessionStorage.setItem('monero-web-fresh-wallet', '1'); } catch (e) {}
+    }
     if (!password) {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         encrypted: false,
