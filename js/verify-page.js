@@ -96,27 +96,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const seedFormat = document.getElementById('seed-format');
   const btnSeed = document.getElementById('btn-derive-seed');
 
-  seedInput.addEventListener('input', () => {
-    const words = seedInput.value.trim().split(/\s+/).filter(w => w.length > 0);
-    const count = words.length;
+  function refreshDeriveBtn() {
+    var words = seedInput.value.trim().split(/\s+/).filter(function(w) { return w.length > 0; });
+    var count = words.length;
     wcNum.textContent = count;
     wordCounter.classList.remove('valid');
     seedFormat.style.display = 'none';
     seedFormat.className = 'seed-format-badge';
     btnSeed.disabled = true;
 
-    const fmt = formats[count];
+    var fmt = formats[count];
     if (fmt) {
       wordCounter.classList.add('valid');
-      btnSeed.disabled = false;
       seedFormat.style.display = 'inline-block';
       seedFormat.classList.add(fmt.cls);
       seedFormat.textContent = fmt.icon + ' ' + fmt.name;
+      // Polyseed (16 words) has embedded birthday — no age selection needed.
+      // For all other formats, require a wallet-age button click first.
+      if (count === 16 || walletAgeSelected) {
+        btnSeed.disabled = false;
+      }
     }
     // BIP-39 passphrase row only shown for 12-word seeds
     document.getElementById('bip39-pass-group').style.display =
       (count === 12) ? 'block' : 'none';
-  });
+  }
+  seedInput.addEventListener('input', refreshDeriveBtn);
 
   // ─── WALLET AGE BUTTONS → restore height ───
   // Each button computes an approximate block height based on how old the
@@ -152,9 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   var restoreHeightEl = $el('restore-height');
   var selectedLabel = $el('restore-height-selected');
+  var walletAgeSelected = false;
 
   document.querySelectorAll('.wallet-age-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
+      walletAgeSelected = true;
       // Remove active state from all buttons
       document.querySelectorAll('.wallet-age-btn').forEach(function(b) {
         b.style.background = 'var(--surface)';
@@ -165,6 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.style.background = 'var(--xmr-dim)';
       btn.style.borderColor = 'rgba(255,102,0,0.4)';
       btn.style.color = 'var(--xmr)';
+      // Re-evaluate derive button state
+      refreshDeriveBtn();
 
       var age = btn.dataset.age;
       var height = ageToHeight(age);
