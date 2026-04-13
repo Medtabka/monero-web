@@ -98,13 +98,12 @@ const MoneroSend = (function () {
 
     var amountAtomic = BigInt(xmrToAtomic(xmrAmount));
 
-    // 1. Fetch unspent outputs
-    var unspentResp = (preview && preview._unspentResp)
-      ? preview._unspentResp
-      : await LwsClient.getUnspentOuts(
-          walletKeys.address, walletKeys.privateViewKeyHex,
-          '0', DEFAULT_MIXIN, true
-        );
+    // 1. Always fetch fresh unspent outputs (never use cached preview —
+    // the LWS state can change between Review and Confirm steps)
+    var unspentResp = await LwsClient.getUnspentOuts(
+      walletKeys.address, walletKeys.privateViewKeyHex,
+      '0', DEFAULT_MIXIN, true
+    );
 
     console.log('[send] view key used:', walletKeys.privateViewKeyHex);
     console.log('[send] unspent response:', JSON.stringify(unspentResp).slice(0, 300));
