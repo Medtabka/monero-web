@@ -155,16 +155,26 @@ const MoneroSend = (function () {
           parseInt(req.mixin, 10) || 16,
           req.use_dust === true || req.use_dust === 'true'
         ).then(function (res) {
-          console.log('[send] got unspent outs:', JSON.stringify(res).slice(0, 200));
+          console.log('[send] got unspent outs, outputs count:', (res.outputs||[]).length);
+          console.log('[send] unspent outs full response:', JSON.stringify(res));
           try {
+            // The WASM expects the unspent outs wrapped in {task_id, res}
+            // where res matches the MyMonero get_unspent_outs response format
             var cbArg = JSON.stringify({ task_id: taskId, res: res });
-            console.log('[send] calling send_cb_I, arg length:', cbArg.length);
-            var ret = JSON.parse(mod.send_cb_I__got_unspent_outs(cbArg));
-            console.log('[send] send_cb_I returned:', JSON.stringify(ret).slice(0, 200));
-            if (ret && ret.err_msg) reject(new Error(ret.err_msg));
+            console.log('[send] calling send_cb_I, exists:', typeof mod.send_cb_I__got_unspent_outs);
+            var retStr = mod.send_cb_I__got_unspent_outs(cbArg);
+            console.log('[send] send_cb_I returned:', retStr);
+            if (retStr) {
+              var ret = JSON.parse(retStr);
+              if (ret && ret.err_msg) reject(new Error(ret.err_msg));
+            }
           } catch (e) {
-            console.error('[send] send_cb_I error:', e);
-            reject(e);
+            var msg = 'Failed processing unspent outputs';
+            if (typeof e === 'number' && mod.UTF8ToString) {
+              try { msg = mod.UTF8ToString(e) || msg; } catch (x) {}
+            }
+            console.error('[send] send_cb_I error:', e, 'decoded:', msg);
+            reject(new Error(msg));
           }
         }).catch(function (e) {
           console.error('[send] getUnspentOuts failed:', e);
