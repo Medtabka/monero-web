@@ -260,17 +260,30 @@ const MoneroSend = (function () {
       if (paymentId) args.payment_id_string = paymentId;
 
       try {
-        console.log('[send] calling send_funds with args:', JSON.stringify(args).slice(0, 200) + '...');
+        console.log('[send] calling send_funds...');
         var retStr = mod.send_funds(JSON.stringify(args));
         console.log('[send] send_funds returned:', retStr);
-        var ret = JSON.parse(retStr);
-        if (ret && ret.err_msg) {
-          console.error('[send] send_funds error:', ret.err_msg);
-          reject(new Error(ret.err_msg));
+        if (retStr) {
+          var ret = JSON.parse(retStr);
+          if (ret && ret.err_msg) {
+            console.error('[send] send_funds error:', ret.err_msg);
+            reject(new Error(ret.err_msg));
+          }
         }
+        // send_funds returns {} and continues via callbacks — don't resolve yet
       } catch (e) {
-        console.error('[send] send_funds exception:', e);
-        reject(e);
+        // WASM C++ exceptions become raw numbers (memory pointers).
+        // Try to decode the error message from the WASM heap.
+        var msg = 'Transaction failed';
+        if (typeof e === 'number' && mod.UTF8ToString) {
+          try { msg = mod.UTF8ToString(e); } catch (x) {}
+        }
+        if (typeof e === 'number' && mod.getExceptionMessage) {
+          try { msg = mod.getExceptionMessage(e); } catch (x) {}
+        }
+        if (typeof e === 'object' && e && e.message) msg = e.message;
+        console.error('[send] send_funds exception:', e, 'decoded:', msg);
+        reject(new Error(msg));
       }
     });
   }
