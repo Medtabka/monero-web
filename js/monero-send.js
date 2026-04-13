@@ -138,6 +138,7 @@ const MoneroSend = (function () {
       // ── WASM → JS callbacks ──────────────────────────────────────
 
       mod.fromCpp__send_funds__get_unspent_outs = function (_tid, reqStr) {
+        console.log('[send] WASM requesting unspent outs');
         var req = typeof reqStr === 'string' ? JSON.parse(reqStr) : reqStr;
         LwsClient.getUnspentOuts(
           walletKeys.address,
@@ -161,6 +162,7 @@ const MoneroSend = (function () {
       };
 
       mod.fromCpp__send_funds__get_random_outs = function (_tid, reqStr) {
+        console.log('[send] WASM requesting random outs (decoys)');
         var req = typeof reqStr === 'string' ? JSON.parse(reqStr) : reqStr;
         LwsClient.getRandomOuts(
           req.amounts || ['0'],
@@ -181,6 +183,7 @@ const MoneroSend = (function () {
       };
 
       mod.fromCpp__send_funds__submit_raw_tx = function (_tid, reqStr) {
+        console.log('[send] WASM submitting signed tx');
         var req = typeof reqStr === 'string' ? JSON.parse(reqStr) : reqStr;
         LwsClient.submitRawTx(req.tx).then(function (res) {
           try {
@@ -203,6 +206,7 @@ const MoneroSend = (function () {
       };
 
       mod.fromCpp__send_funds__error = function (_tid, paramsStr) {
+        console.error('[send] WASM error callback:', paramsStr);
         try {
           var p = typeof paramsStr === 'string' ? JSON.parse(paramsStr) : paramsStr;
           reject(new Error(p.err_msg || 'Transaction construction failed'));
@@ -242,10 +246,16 @@ const MoneroSend = (function () {
       if (paymentId) args.payment_id_string = paymentId;
 
       try {
+        console.log('[send] calling send_funds with args:', JSON.stringify(args).slice(0, 200) + '...');
         var retStr = mod.send_funds(JSON.stringify(args));
+        console.log('[send] send_funds returned:', retStr);
         var ret = JSON.parse(retStr);
-        if (ret && ret.err_msg) reject(new Error(ret.err_msg));
+        if (ret && ret.err_msg) {
+          console.error('[send] send_funds error:', ret.err_msg);
+          reject(new Error(ret.err_msg));
+        }
       } catch (e) {
+        console.error('[send] send_funds exception:', e);
         reject(e);
       }
     });
