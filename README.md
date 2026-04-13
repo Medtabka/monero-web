@@ -165,8 +165,10 @@ chain to compromise.
   encrypted-at-rest blob in `sessionStorage`, not the in-memory keys. While
   the dashboard is unlocked the keys are decrypted in JS memory.
 - **Send-side key exposure.** Sending Monero requires the spend key to be in
-  memory at signing time. The wallet does not yet implement send. When it
-  does, that's still the threat surface.
+  memory at signing time. The send flow uses the mymonero-core WASM module to
+  sign transactions client-side — the spend key stays in the browser and is
+  never sent to the server — but it is still present in JS memory while the
+  dashboard tab is unlocked.
 
 If your threat model includes nation-state actors or you're moving funds you
 can't afford to lose, use Monero CLI on an air-gapped machine.

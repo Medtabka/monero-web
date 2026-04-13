@@ -915,16 +915,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Confirm → actually send
   document.getElementById('send-confirm').addEventListener('click', async () => {
-    console.log('[dashboard] send-confirm clicked');
     sendShowStep('result');
     sendShowResultState('pending');
     try {
       const toAddress = (sendToEl.value || '').trim();
       const xmrAmount = (sendAmountEl.value || '').trim();
       const paymentId = (document.getElementById('send-pid').value || '').trim();
-      console.log('[dashboard] calling MoneroSend.send, amount:', xmrAmount, 'to:', toAddress.slice(0,12) + '...');
       const result = await MoneroSend.send(walletKeys, toAddress, xmrAmount, sendPriority, paymentId, sendPreview);
-      console.log('[dashboard] send succeeded:', result);
       document.getElementById('send-result-hash').textContent = result.tx_hash;
       sendShowResultState('success');
       // Trigger a balance refresh so the new pending tx shows up

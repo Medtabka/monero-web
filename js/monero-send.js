@@ -105,8 +105,6 @@ const MoneroSend = (function () {
       '0', DEFAULT_MIXIN, true
     );
 
-    console.log('[send] view key used:', walletKeys.privateViewKeyHex);
-    console.log('[send] unspent response:', JSON.stringify(unspentResp).slice(0, 300));
     if (!unspentResp || !Array.isArray(unspentResp.outputs) || unspentResp.outputs.length === 0) {
       throw new Error('No spendable outputs found (LWS returned ' +
         (unspentResp ? (unspentResp.outputs ? unspentResp.outputs.length : 'no outputs field') : 'null') + ')');
@@ -178,11 +176,8 @@ const MoneroSend = (function () {
       if (o.recipient) out.recipient = o.recipient;
       return out;
     });
-    console.log('[send] first output sample:', JSON.stringify(wasmOutputs[0]).slice(0, 200));
 
     // 5. Build and sign via WASM (synchronous — no async callbacks)
-    console.log('[send] signing tx: amount=' + amountAtomic + ' fee=' + feeAmount + ' change=' + changeAmount);
-    console.log('[send] outputs to sign:', wasmOutputs.length, 'decoy sets:', mixResp.amount_outs.length);
 
     var step2Params = {
       from_address_string: walletKeys.address,
@@ -228,15 +223,12 @@ const MoneroSend = (function () {
       throw new Error('Transaction signing failed — no signed output');
     }
 
-    console.log('[send] tx signed, hash:', step2Result.tx_hash);
-
     // 6. Broadcast
     var broadcastResp = await LwsClient.submitRawTx(step2Result.serialized_signed_tx);
     if (!broadcastResp || broadcastResp.status !== 'OK') {
       throw new Error('Broadcast rejected: ' + (broadcastResp && broadcastResp.error || 'unknown'));
     }
 
-    console.log('[send] tx broadcast OK');
     return {
       tx_hash: step2Result.tx_hash,
       tx_key: step2Result.tx_key || '',
