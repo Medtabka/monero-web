@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.wallet-age-btn').forEach(function(b) {
         b.style.background = 'var(--surface)';
         b.style.borderColor = 'var(--border)';
-        b.style.color = b.dataset.age === 'unknown' ? 'var(--text-dim)' : 'var(--text)';
+        b.style.color = 'var(--text)';
       });
       // Highlight the clicked button
       btn.style.background = 'var(--xmr-dim)';
