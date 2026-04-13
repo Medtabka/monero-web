@@ -123,10 +123,10 @@ const MoneroCore = (function () {
    */
   function sendStep2 (params) {
     if (!_module) throw new Error('MoneroCore not loaded');
-    const required = ['sec_viewKey_string', 'sec_spendKey_string', 'pub_spendKey_string',
+    const required = ['sec_viewKey_string', 'sec_spendKey_string',
                       'from_address_string', 'to_address_string', 'final_total_wo_fee',
-                      'change_amount', 'fee_amount', 'outputs', 'mix_outs',
-                      'fake_outputs_count', 'unlock_time', 'nettype_string'];
+                      'change_amount', 'fee_amount', 'using_outs', 'mix_outs',
+                      'unlock_time', 'nettype_string'];
     for (const k of required) {
       if (params[k] === undefined) {
         throw new Error('sendStep2: missing required parameter "' + k + '"');

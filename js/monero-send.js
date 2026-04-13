@@ -182,18 +182,19 @@ const MoneroSend = (function () {
       from_address_string: walletKeys.address,
       sec_viewKey_string: walletKeys.privateViewKeyHex,
       sec_spendKey_string: walletKeys.privateSpendKeyHex,
-      pub_spendKey_string: walletKeys.publicSpendKeyHex,
       to_address_string: toAddress,
-      payment_id_string: paymentId || '',
       final_total_wo_fee: amountAtomic.toString(),
       change_amount: changeAmount.toString(),
       fee_amount: feeAmount.toString(),
-      outputs: wasmOutputs,
+      priority: String(priority || 2),
+      fee_per_b: String(perByteFee),
+      fee_mask: String(feeMask),
+      using_outs: wasmOutputs,
       mix_outs: mixResp.amount_outs,
-      fake_outputs_count: DEFAULT_MIXIN,
       unlock_time: '0',
       nettype_string: 'MAINNET',
     };
+    if (paymentId) step2Params.payment_id_string = paymentId;
 
     var step2Result;
     try {
