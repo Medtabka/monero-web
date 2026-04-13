@@ -155,13 +155,19 @@ const MoneroSend = (function () {
           parseInt(req.mixin, 10) || 16,
           req.use_dust === true || req.use_dust === 'true'
         ).then(function (res) {
+          console.log('[send] got unspent outs:', JSON.stringify(res).slice(0, 200));
           try {
-            var ret = JSON.parse(mod.send_cb_I__got_unspent_outs(
-              JSON.stringify({ task_id: taskId, res: res })
-            ));
+            var cbArg = JSON.stringify({ task_id: taskId, res: res });
+            console.log('[send] calling send_cb_I, arg length:', cbArg.length);
+            var ret = JSON.parse(mod.send_cb_I__got_unspent_outs(cbArg));
+            console.log('[send] send_cb_I returned:', JSON.stringify(ret).slice(0, 200));
             if (ret && ret.err_msg) reject(new Error(ret.err_msg));
-          } catch (e) { reject(e); }
+          } catch (e) {
+            console.error('[send] send_cb_I error:', e);
+            reject(e);
+          }
         }).catch(function (e) {
+          console.error('[send] getUnspentOuts failed:', e);
           try { mod.send_cb_I__got_unspent_outs(JSON.stringify({
             task_id: taskId, err_msg: e.message || String(e)
           })); } catch (x) {}
