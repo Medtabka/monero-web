@@ -127,7 +127,15 @@ const MoneroSend = (function () {
   // ── Send transaction (WASM-powered) ───────────────────────────────
 
   async function send (walletKeys, toAddress, xmrAmount, priority, paymentId, _preview) {
-    const mod = await _ensureModule();
+    console.log('[send] send() called, loading WASM...');
+    let mod;
+    try {
+      mod = await _ensureModule();
+      console.log('[send] WASM loaded OK, send_funds exists:', typeof mod.send_funds);
+    } catch (e) {
+      console.error('[send] WASM load failed:', e);
+      throw e;
+    }
 
     const amountAtomic = xmrToAtomic(xmrAmount).toString();
     const nettype = 0; // MAINNET
