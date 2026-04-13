@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!window._derivedKeys) return;
         const k = window._derivedKeys;
         const pw = $val('session-pw');
-        await WalletVault.store({
+        var vaultData = {
           address: k.address,
           network: k.network,
           privateSpendKeyHex: k.privateSpendKeyHex,
@@ -369,7 +369,13 @@ document.addEventListener('DOMContentLoaded', () => {
           seedFormat:         k.seedFormat || null,
           birthday:           (typeof k.birthday === 'number') ? k.birthday : null,
           restoreHeight:      (typeof k.restoreHeight === 'number') ? k.restoreHeight : null,
-        }, pw);
+        };
+        // Preserve the freshly-created flag if set (from Generate New flow)
+        if (k.createdAtCurrentTip) {
+          vaultData.createdAtCurrentTip = true;
+          try { sessionStorage.setItem('monero-web-fresh-wallet', '1'); } catch (e) {}
+        }
+        await WalletVault.store(vaultData, pw);
         window.location.href = '/dashboard';
       });
     }
@@ -410,7 +416,10 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('create-view').textContent = wallet.privateViewKeyHex;
           document.getElementById('create-result').style.display = 'block';
 
-          // Store for Open Wallet button
+          // Store for Open Wallet button — mark as freshly created so
+          // the dashboard skips historical scanning regardless of which
+          // "Open Wallet" button the user clicks.
+          wallet.createdAtCurrentTip = true;
           window._derivedKeys = wallet;
 
           // Add Open Wallet block (password + button) if not exists
