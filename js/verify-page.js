@@ -120,29 +120,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ─── WALLET AGE BUTTONS → restore height ───
   // Each button computes an approximate block height based on how old the
-  // wallet is. Monero blocks are ~2 min apart → 720/day → ~21,600/month.
-  // The reference point is the Monero genesis (April 18, 2014).
-  // We compute dynamically from the current date so buttons stay accurate
-  // as months pass without code changes.
-  const MONERO_GENESIS_TS = Date.UTC(2014, 3, 18) / 1000; // April 18, 2014
-  const SECS_PER_BLOCK = 120; // ~2 minutes
+  // wallet is. Monero blocks are ~2 min apart → 720/day → ~5,040/week.
+  //
+  // We use a known checkpoint to estimate the current tip accurately,
+  // then subtract blocks for the chosen time period. Computing from
+  // genesis forward is inaccurate because Monero's average block time
+  // over 12 years drifts from the target 120s.
+  const CHECKPOINT_HEIGHT = 3651000;
+  const CHECKPOINT_TS = Date.UTC(2026, 3, 13) / 1000; // April 13, 2026
+  const SECS_PER_BLOCK = 120;
+  const BLOCKS_PER_DAY = 720;
 
-  function dateToApproxHeight(date) {
-    const now = Date.now() / 1000;
-    const target = date.getTime() / 1000;
-    if (target <= MONERO_GENESIS_TS) return 0;
-    return Math.max(0, Math.floor((target - MONERO_GENESIS_TS) / SECS_PER_BLOCK));
+  function estimatedCurrentHeight() {
+    var secsSinceCheckpoint = Date.now() / 1000 - CHECKPOINT_TS;
+    return Math.max(CHECKPOINT_HEIGHT, CHECKPOINT_HEIGHT + Math.floor(secsSinceCheckpoint / SECS_PER_BLOCK));
   }
 
   function ageToHeight(age) {
-    var now = new Date();
+    var tip = estimatedCurrentHeight();
     switch (age) {
-      case 'week':    return dateToApproxHeight(new Date(now - 7 * 86400000));
-      case 'month':   return dateToApproxHeight(new Date(now - 30 * 86400000));
-      case '3months': return dateToApproxHeight(new Date(now - 91 * 86400000));
-      case '6months': return dateToApproxHeight(new Date(now - 182 * 86400000));
-      case 'year':    return dateToApproxHeight(new Date(now - 365 * 86400000));
-      case '2years':  return dateToApproxHeight(new Date(now - 730 * 86400000));
+      case 'week':    return Math.max(0, tip - 7 * BLOCKS_PER_DAY);
+      case 'month':   return Math.max(0, tip - 30 * BLOCKS_PER_DAY);
+      case '3months': return Math.max(0, tip - 91 * BLOCKS_PER_DAY);
+      case '6months': return Math.max(0, tip - 182 * BLOCKS_PER_DAY);
+      case 'year':    return Math.max(0, tip - 365 * BLOCKS_PER_DAY);
+      case '2years':  return Math.max(0, tip - 730 * BLOCKS_PER_DAY);
       case 'unknown': return 0;
       default:        return 0;
     }

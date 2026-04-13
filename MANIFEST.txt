@@ -1,5 +1,5 @@
 # monero-web build manifest
-# Generated 2026-04-13T14:37:12Z from commit d43eb38
+# Generated 2026-04-13T14:47:11Z from commit 3ea13fc
 #
 # Verify the live deployment matches a specific git tag with:
 #   git checkout v0.1.0
@@ -52,7 +52,7 @@ bf22b13d1187c01fe962b65098e47c9fbd29555eef224e91adeaf30c3d4fc155  js/mymonero-co
 5f5e2c80f5ba8b2b68d771fc44da7b5fd4a3e256526f78f985644f99e0df84c4  js/qrcodegen.js
 4695ae6ccba75eb2775e6eadab605cad283256ba1866fe78f458baf65b5a5f85  js/qr-scanner.js
 5b424366c05a3dbae6f45eb48c697815b3fc7f0b22a524850fd7711245b4ea6c  js/send.js
-e973defed1c35fccec8cc76fb6c17bb611688ea02e253149e8d514d748e9c3a8  js/verify-page.js
+65c16ab5f3b1b93db590c9db51f3ab3588e05b7bdd4e61b9abb425d4fe8a4394  js/verify-page.js
 0d6c10b0b50d782d9a988cb2d90efb96f91f66618fbf06805193dd8a60722e04  js/wallet-vault.js
 7aa134270a29f9c06c053cf277facc9d21447e9920ff2289038ccfad61550b2a  privacy.html
 c714dfc6f77f5ddfd2a7da150521b2de0e3a87e830fae9abb25d22a055362b67  _redirects
