@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // seeds use one-way KDFs — reconstructing a mnemonic from the spend key
     // would produce a DIFFERENT (wrong) 25-word seed.
     var fmt = walletKeys.seedFormat;
-    if (fmt === 'polyseed' || fmt === 'bip39' || fmt === 'mymonero') return;
+    if (fmt && fmt !== 'standard') return;
     var mnemonic = walletKeys.mnemonic || null;
     if (!mnemonic && typeof MoneroWordList !== 'undefined' && MoneroWordList.isLoaded('english')) {
       try {

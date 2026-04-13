@@ -154,6 +154,7 @@ const MoneroKeys = (function () {
 
     const result = deriveFromSeed(seed, network);
     result.wordCount = count;
+    result.seedFormat = (count === 13) ? 'mymonero' : 'standard';
     result.seedHex = bytesToHex(seed);
     return result;
   }
