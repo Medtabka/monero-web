@@ -106,8 +106,10 @@ const MoneroSend = (function () {
           '0', DEFAULT_MIXIN, true
         );
 
+    console.log('[send] unspent response:', JSON.stringify(unspentResp).slice(0, 300));
     if (!unspentResp || !Array.isArray(unspentResp.outputs) || unspentResp.outputs.length === 0) {
-      throw new Error('No spendable outputs found');
+      throw new Error('No spendable outputs found (LWS returned ' +
+        (unspentResp ? (unspentResp.outputs ? unspentResp.outputs.length : 'no outputs field') : 'null') + ')');
     }
 
     // Use all outputs from the LWS. The LWS may include outputs with
