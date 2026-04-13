@@ -106,6 +106,7 @@ const MoneroSend = (function () {
           '0', DEFAULT_MIXIN, true
         );
 
+    console.log('[send] view key used:', walletKeys.privateViewKeyHex);
     console.log('[send] unspent response:', JSON.stringify(unspentResp).slice(0, 300));
     if (!unspentResp || !Array.isArray(unspentResp.outputs) || unspentResp.outputs.length === 0) {
       throw new Error('No spendable outputs found (LWS returned ' +
