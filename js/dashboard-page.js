@@ -909,7 +909,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       sendToHintEl.textContent = '✓ ' + label;
       sendToHintEl.style.color = '#22c55e';
     }
-    const amtOk = amt.length > 0 && /^\d+(\.\d+)?$/.test(amt) && Number(amt) > 0;
+    var amtNorm = amt.replace(',', '.'); // accept comma as decimal separator
+    const amtOk = amtNorm.length > 0 && /^\d+(\.\d+)?$/.test(amtNorm) && Number(amtNorm) > 0;
     sendReviewBtn.disabled = !(v.valid && amtOk);
     // Show/hide payment ID field for primary addresses only
     const pidGroup = document.getElementById('send-pid-group');

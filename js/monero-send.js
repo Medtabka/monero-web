@@ -44,7 +44,7 @@ const MoneroSend = (function () {
   // ── Amount helpers ────────────────────────────────────────────────
 
   function xmrToAtomic (xmrStr) {
-    var s = String(xmrStr).trim();
+    var s = String(xmrStr).trim().replace(',', '.'); // accept comma as decimal separator
     if (!s) return '0';
     if (!/^[0-9]+(\.[0-9]+)?$/.test(s)) throw new Error('Invalid XMR amount');
     var parts = s.split('.');
