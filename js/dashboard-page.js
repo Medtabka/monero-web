@@ -351,6 +351,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // dashboard.
   let balancePollTimer = null;
   let lwsRegistered = false;
+  var _keyImageCache = {};  // tx_pub_key:out_index → computed key_image
 
   async function startBalancePolling () {
     const balEl  = document.getElementById('balance-xmr');
@@ -456,6 +457,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     const noteEl = document.getElementById('balance-note');
     try {
       const info = await LwsClient.getAddressInfo(walletKeys.address, walletKeys.privateViewKeyHex);
+
+      // ── Client-side key_image verification ──
+      // The LWS can produce false spend detections: it sees the wallet's
+      // output as a ring decoy in someone else's transaction and flags it
+      // as "spent". We fix this by computing the REAL key_image for each
+      // reported spent output using the spend key (which the LWS doesn't
+      // have). If the LWS-reported key_image doesn't match, it's a false
+      // positive and we subtract it from total_sent.
+      if (info && Array.isArray(info.spent_outputs) && info.spent_outputs.length > 0
+          && walletKeys.privateSpendKeyHex && !walletKeys.watchOnly) {
+        var falseSpendTotal = 0n;
+        try {
+          if (!MoneroCore.isLoaded()) await MoneroCore.load();
+          for (var so of info.spent_outputs) {
+            var cacheKey = so.tx_pub_key + ':' + so.out_index;
+            if (!_keyImageCache[cacheKey]) {
+              _keyImageCache[cacheKey] = MoneroCore.generateKeyImage(
+                so.tx_pub_key,
+                walletKeys.privateViewKeyHex,
+                walletKeys.publicSpendKeyHex,
+                walletKeys.privateSpendKeyHex,
+                so.out_index
+              );
+            }
+            if (_keyImageCache[cacheKey] !== so.key_image) {
+              falseSpendTotal += BigInt(so.amount || '0');
+              console.log('[lws] false spend detected: key_image ' +
+                so.key_image.slice(0, 16) + '… does not match computed ' +
+                _keyImageCache[cacheKey].slice(0, 16) + '…');
+            }
+          }
+          if (falseSpendTotal > 0n) {
+            // Correct total_sent by subtracting false spends
+            var correctedSent = BigInt(info.total_sent || '0') - falseSpendTotal;
+            if (correctedSent < 0n) correctedSent = 0n;
+            info.total_sent = correctedSent.toString();
+          }
+        } catch (e) {
+          console.warn('[lws] key_image verification failed (non-fatal):', e);
+        }
+      }
+
       const avail = LwsClient.availableBalance(info);
       const progress = LwsClient.scanProgress(info);
       balEl.textContent = LwsClient.formatXmr(avail);
@@ -507,8 +550,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!listEl) return;
     try {
       const resp = await LwsClient.getAddressTxs(walletKeys.address, walletKeys.privateViewKeyHex);
-      const txs = (resp && Array.isArray(resp.transactions)) ? resp.transactions : [];
+      var txs = (resp && Array.isArray(resp.transactions)) ? resp.transactions : [];
       const chainTip = (resp && resp.blockchain_height) || 0;
+
+      // Filter out transactions that consist entirely of false spends.
+      // A false spend is one where every spent_output's key_image doesn't
+      // match the real key_image we computed in pollBalanceOnce().
+      if (Object.keys(_keyImageCache).length > 0) {
+        txs = txs.filter(function (tx) {
+          if (!tx.spent_outputs || tx.spent_outputs.length === 0) return true;
+          // Keep the tx if at least one spent_output has a verified key_image
+          for (var so of tx.spent_outputs) {
+            var cacheKey = so.tx_pub_key + ':' + so.out_index;
+            var real = _keyImageCache[cacheKey];
+            if (!real || real === so.key_image) return true;
+          }
+          return false; // all spent_outputs are false positives — hide this tx
+        });
+      }
 
       if (txs.length === 0) {
         listEl.innerHTML = '<div class="key-card" style="text-align:center;color:var(--text-dim);font-size:.75rem;padding:18px">No transactions yet. Receive some XMR and it\'ll show up here.</div>';

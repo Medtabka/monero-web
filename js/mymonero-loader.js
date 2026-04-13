@@ -138,7 +138,33 @@ const MoneroCore = (function () {
     return parsed;
   }
 
-  return { load, isLoaded, decodeAddress, sendStep1, sendStep2 };
+  // ── Key image generation ──────────────────────────────────────────────
+  /**
+   * Compute the key_image for a specific output. Used to verify whether
+   * the LWS's spent-output detection is correct. The LWS can produce
+   * false positives (it sees the wallet's output as a ring decoy in
+   * someone else's transaction and flags it as spent). By computing
+   * the real key_image client-side, we can compare it against what the
+   * LWS reports and filter out false spends.
+   *
+   * @param {string} txPubKey     - 64-hex tx public key of the RECEIVING tx
+   * @param {string} viewSecHex   - 64-hex private view key
+   * @param {string} spendPubHex  - 64-hex public spend key
+   * @param {string} spendSecHex  - 64-hex private spend key
+   * @param {number} outIndex     - Output index within the receiving tx
+   * @returns {string}            - 64-hex key image
+   */
+  function generateKeyImage (txPubKey, viewSecHex, spendPubHex, spendSecHex, outIndex) {
+    if (!_module) throw new Error('MoneroCore not loaded');
+    const ret = _module.generate_key_image(
+      txPubKey, viewSecHex, spendPubHex, spendSecHex, '' + outIndex
+    );
+    const parsed = JSON.parse(ret);
+    if (parsed.err_msg) throw new Error('generateKeyImage: ' + parsed.err_msg);
+    return parsed.retVal;
+  }
+
+  return { load, isLoaded, decodeAddress, sendStep1, sendStep2, generateKeyImage };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = MoneroCore;
