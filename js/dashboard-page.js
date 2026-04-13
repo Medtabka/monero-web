@@ -137,6 +137,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('key-pub-spend').textContent = walletKeys.publicSpendKeyHex || '— not available (watch-only) —';
   document.getElementById('key-pub-view').textContent = walletKeys.publicViewKeyHex;
 
+  // ─── Seed phrase recovery ───
+  // For 25-word standard seeds, the mnemonic is a reversible encoding of
+  // the spend key. Reconstruct it so users can see/backup their seed.
+  // For BIP-39, polyseed, and MyMonero seeds this isn't possible (one-way KDFs).
+  (function showMnemonic () {
+    if (isWatchOnly || !walletKeys.privateSpendKeyHex) return;
+    var mnemonic = walletKeys.mnemonic || null;
+    if (!mnemonic && typeof MoneroWordList !== 'undefined' && MoneroWordList.isLoaded('english')) {
+      try {
+        var spendBytes = MoneroKeys.hexToBytes(walletKeys.privateSpendKeyHex);
+        var reduced = MoneroEd25519.sc_reduce32(spendBytes);
+        var dataWords = MoneroWordList.encodeBytes('english', reduced);
+        var fullWords = MoneroWordList.appendChecksum('english', dataWords);
+        mnemonic = fullWords.join(' ');
+      } catch (e) { /* wordlist missing or encode failed */ }
+    }
+    if (mnemonic) {
+      document.getElementById('key-mnemonic').textContent = mnemonic;
+      document.getElementById('mnemonic-section').style.display = '';
+      document.getElementById('toggle-mnemonic').addEventListener('click', function () {
+        var el = document.getElementById('key-mnemonic');
+        var isHidden = el.classList.contains('hidden');
+        el.classList.toggle('hidden');
+        this.textContent = isHidden ? 'Hide' : 'Show';
+      });
+    }
+  })();
+
   // ─── Wallet info badge (seed format + polyseed birthday) ───
   // Polyseed encodes a wallet creation timestamp ("birthday") in 10 bits as
   // 2-week buckets since 2021-11-01 UTC. Once balance scanning lands this is
