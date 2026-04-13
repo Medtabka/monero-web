@@ -480,6 +480,35 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           }
 
+          // Download JSON backup button
+          if (!document.getElementById('btn-download-wallet')) {
+            var dlBtn = document.createElement('button');
+            dlBtn.id = 'btn-download-wallet';
+            dlBtn.className = 'btn-primary';
+            dlBtn.style.cssText = 'background:var(--surface-2);color:var(--text);border:1px solid var(--border);margin-top:10px;width:100%';
+            dlBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Wallet Backup (JSON)';
+            dlBtn.addEventListener('click', function () {
+              var data = {
+                address: wallet.address,
+                mnemonic: wallet.mnemonic,
+                privateSpendKey: wallet.privateSpendKeyHex,
+                privateViewKey: wallet.privateViewKeyHex,
+                publicSpendKey: wallet.publicSpendKeyHex,
+                publicViewKey: wallet.publicViewKeyHex,
+                network: wallet.network || 'mainnet',
+                createdAt: new Date().toISOString(),
+              };
+              var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+              var url = URL.createObjectURL(blob);
+              var a = document.createElement('a');
+              a.href = url;
+              a.download = 'monero-wallet-' + wallet.address.slice(0, 8) + '.json';
+              a.click();
+              URL.revokeObjectURL(url);
+            });
+            document.getElementById('create-result').appendChild(dlBtn);
+          }
+
           // Re-bind copy buttons for new elements
           document.querySelectorAll('#create-result .copy-btn').forEach(btn => {
             btn.onclick = () => {
