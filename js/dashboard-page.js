@@ -415,8 +415,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       //   or complete.
       var isNewAccount = loginRes && loginRes.new_address === true;
 
-      if (isNewAccount && freshFlag) {
+      if (freshFlag) {
         // Fresh wallet — no history to find, LWS starts from tip.
+        // If this is an existing account that somehow got an import
+        // (race condition, stale cache), don't make it worse.
         console.log('[lws] fresh wallet — no historical scan needed');
       } else if (isNewAccount) {
         // Imported wallet — trigger historical scan. Pass restoreHeight
