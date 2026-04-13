@@ -88,6 +88,15 @@ const LwsClient = (function () {
     let data;
     try { data = await response.json(); }
     catch (e) {
+      // Empty or non-JSON response — check HTTP status first
+      if (!response.ok) {
+        throw new LwsError(
+          'server',
+          'Server error (HTTP ' + response.status + ')',
+          e,
+          response.status
+        );
+      }
       throw new LwsError('decode', 'Light-wallet server returned invalid JSON', e);
     }
     if (!response.ok) {
