@@ -110,19 +110,11 @@ const MoneroSend = (function () {
       throw new Error('No spendable outputs found');
     }
 
-    // Filter out spent outputs (those with spend_key_images that match
-    // a known key_image on the blockchain)
-    var spendableOuts = unspentResp.outputs.filter(function (o) {
-      if (!o.spend_key_images || o.spend_key_images.length === 0) return true;
-      // If there are spend_key_images, the LWS thinks this output might
-      // be spent. For now, keep outputs that have key_images (they might
-      // be real spends) — the WASM will reject double-spends anyway.
-      return false;
-    });
-
-    if (spendableOuts.length === 0) {
-      throw new Error('All outputs are spent — no funds available to send');
-    }
+    // Use all outputs from the LWS. The LWS may include outputs with
+    // spend_key_images (potential spends), but many are false positives
+    // from ring-decoy detection. The WASM will skip actually-spent outputs
+    // during tx construction, and the network rejects double-spends.
+    var spendableOuts = unspentResp.outputs;
 
     // 2. Select outputs to spend (simple: use all, let WASM compute change)
     var perByteFee = Number(unspentResp.per_byte_fee || unspentResp.per_kb_fee / 1024 || 20);
