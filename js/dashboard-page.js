@@ -143,6 +143,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // For BIP-39, polyseed, and MyMonero seeds this isn't possible (one-way KDFs).
   (function showMnemonic () {
     if (isWatchOnly || !walletKeys.privateSpendKeyHex) return;
+    // Only show for 25-word standard seeds. BIP-39, polyseed, and MyMonero
+    // seeds use one-way KDFs — reconstructing a mnemonic from the spend key
+    // would produce a DIFFERENT (wrong) 25-word seed.
+    var fmt = walletKeys.seedFormat;
+    if (fmt === 'polyseed' || fmt === 'bip39' || fmt === 'mymonero') return;
     var mnemonic = walletKeys.mnemonic || null;
     if (!mnemonic && typeof MoneroWordList !== 'undefined' && MoneroWordList.isLoaded('english')) {
       try {
