@@ -584,7 +584,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const rows = txs.map(tx => {
         const received = BigInt(tx.total_received || '0');
         const sent     = BigInt(tx.total_sent     || '0');
-        const net      = received - sent;          // positive = incoming
+        const net      = received - sent;
         const isIn     = net >= 0n;
         const display  = LwsClient.formatXmr(net < 0n ? -net : net);
         const confirms = tx.mempool ? 0 : Math.max(0, chainTip - (tx.height || 0));
@@ -597,9 +597,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         const arrow    = isIn ? '↓' : '↑';
         const arrowCol = isIn ? 'var(--success)' : 'var(--xmr)';
         const hash     = (tx.hash || '').slice(0, 16) + '…';
+        const fullHash = tx.hash || '';
+        const feeDisplay = tx.fee && tx.fee !== '0' ? LwsClient.formatXmr(tx.fee) : '—';
+        const paymentId  = tx.payment_id && tx.payment_id !== '0000000000000000' ? tx.payment_id : '';
+        const explorerUrl = 'https://www.exploremonero.com/transaction/' + encodeURIComponent(fullHash);
 
-        return '<div class="key-card" style="margin-bottom:6px;padding:12px 14px">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">' +
+        // Detail panel (hidden by default, toggled on click)
+        var detailRows = '';
+        detailRows += '<tr><td style="color:var(--text-dim);padding:4px 12px 4px 0;white-space:nowrap">Transaction ID</td><td style="padding:4px 0;word-break:break-all"><span class="tx-detail-copy" data-copy="' + escapeHtml(fullHash) + '" style="cursor:pointer" title="Click to copy">' + escapeHtml(fullHash) + '</span></td></tr>';
+        detailRows += '<tr><td style="color:var(--text-dim);padding:4px 12px 4px 0">Date</td><td style="padding:4px 0">' + escapeHtml(when) + '</td></tr>';
+        detailRows += '<tr><td style="color:var(--text-dim);padding:4px 12px 4px 0">Height</td><td style="padding:4px 0">' + (tx.height ? tx.height.toLocaleString() : 'mempool') + '</td></tr>';
+        detailRows += '<tr><td style="color:var(--text-dim);padding:4px 12px 4px 0">Amount</td><td style="padding:4px 0;font-weight:600;color:' + arrowCol + '">' + (isIn ? '+' : '−') + display + ' XMR</td></tr>';
+        detailRows += '<tr><td style="color:var(--text-dim);padding:4px 12px 4px 0">Fee</td><td style="padding:4px 0">' + feeDisplay + (feeDisplay !== '—' ? ' XMR' : '') + '</td></tr>';
+        detailRows += '<tr><td style="color:var(--text-dim);padding:4px 12px 4px 0">Confirmations</td><td style="padding:4px 0">' + (tx.mempool ? 'unconfirmed' : confirms.toLocaleString()) + '</td></tr>';
+        if (paymentId) {
+          detailRows += '<tr><td style="color:var(--text-dim);padding:4px 12px 4px 0">Payment ID</td><td style="padding:4px 0;word-break:break-all">' + escapeHtml(paymentId) + '</td></tr>';
+        }
+        detailRows += '<tr><td style="color:var(--text-dim);padding:4px 12px 4px 0">Direction</td><td style="padding:4px 0">' + (isIn ? 'Received' : 'Sent') + '</td></tr>';
+        detailRows += '<tr><td colspan="2" style="padding:8px 0 0 0"><a href="' + escapeHtml(explorerUrl) + '" target="_blank" rel="noopener noreferrer" style="color:var(--xmr);font-size:.72rem;text-decoration:none">View on block explorer ↗</a></td></tr>';
+
+        return '<div class="key-card" style="margin-bottom:6px;padding:0;overflow:hidden">' +
+          '<div class="tx-row" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;cursor:pointer">' +
             '<div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">' +
               '<span style="font-size:1.1rem;color:' + arrowCol + ';font-weight:700;flex-shrink:0">' + arrow + '</span>' +
               '<div style="min-width:0">' +
@@ -607,17 +625,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                 '<div style="font-size:.65rem;color:var(--text-dim);margin-top:2px">' + escapeHtml(when) + ' · ' + status + '</div>' +
               '</div>' +
             '</div>' +
-            '<div style="font-family:\'JetBrains Mono\',monospace;font-size:.62rem;color:var(--text-dim);cursor:pointer" title="Click to copy tx hash" data-txhash="' + escapeHtml(tx.hash || '') + '">' + escapeHtml(hash) + '</div>' +
+            '<div style="font-family:\'JetBrains Mono\',monospace;font-size:.62rem;color:var(--text-dim)">' + escapeHtml(hash) + '</div>' +
+          '</div>' +
+          '<div class="tx-detail" style="display:none;padding:0 14px 14px;border-top:1px solid var(--border)">' +
+            '<table style="width:100%;font-size:.72rem;font-family:\'JetBrains Mono\',monospace;border-collapse:collapse;margin-top:10px">' + detailRows + '</table>' +
           '</div>' +
         '</div>';
       }).join('');
 
       listEl.innerHTML = rows;
-      // Click-to-copy on tx hashes
-      listEl.querySelectorAll('[data-txhash]').forEach(el => {
-        el.addEventListener('click', () => {
-          const h = el.getAttribute('data-txhash');
-          if (h) navigator.clipboard.writeText(h).then(() => {
+
+      // Toggle detail panel on row click
+      listEl.querySelectorAll('.tx-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const detail = row.nextElementSibling;
+          if (detail && detail.classList.contains('tx-detail')) {
+            detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+          }
+        });
+      });
+
+      // Click-to-copy on detail fields
+      listEl.querySelectorAll('.tx-detail-copy').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const val = el.getAttribute('data-copy');
+          if (val) navigator.clipboard.writeText(val).then(() => {
             const old = el.textContent;
             el.textContent = 'Copied!';
             setTimeout(() => { el.textContent = old; }, 1200);
