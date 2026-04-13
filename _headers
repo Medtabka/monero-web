@@ -9,10 +9,13 @@
   # Inline <script> blocks are forbidden; use external .js files.
   #
   # 'wasm-unsafe-eval' is needed for the vendored mymonero-core WebAssembly
-  # module that builds and signs Monero transactions client-side. Despite
-  # the scary name it does NOT permit eval() of arbitrary JavaScript — only
-  # WebAssembly compilation. The 'unsafe-eval' / 'unsafe-inline' source
-  # expressions remain forbidden. WASM modules still must come from 'self'.
+  # module that builds and signs Monero transactions client-side.
+  # 'unsafe-eval' is required because the Emscripten-generated JS glue code
+  # (MyMoneroCoreCpp_WASM.js) uses new Function() internally for error type
+  # registration. This is an Emscripten limitation — the WASM binary itself
+  # only needs 'wasm-unsafe-eval', but the JS bootstrap won't load without
+  # 'unsafe-eval'. All scripts still must come from 'self', so eval() of
+  # attacker-controlled strings is not possible.
   #
   # We still allow 'unsafe-inline' for STYLES because the codebase has many
   # inline style="..." attributes (which would be a much larger refactor)
@@ -22,7 +25,7 @@
   # cross-origin fetch() calls to the light-wallet server (monero-lws)
   # running on our VPS at that subdomain. Without this, CSP blocks the
   # balance-polling and send-flow requests silently.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://node.monero-web.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://node.monero-web.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
 
   # Standard hardening
   X-Content-Type-Options: nosniff

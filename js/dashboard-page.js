@@ -469,10 +469,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           && walletKeys.privateSpendKeyHex && !walletKeys.watchOnly) {
         var falseSpendTotal = 0n;
         try {
-          if (!MoneroCore.isLoaded()) await MoneroCore.load();
           for (var so of info.spent_outputs) {
             var cacheKey = so.tx_pub_key + ':' + so.out_index;
             if (!_keyImageCache[cacheKey]) {
+              if (!MoneroCore.isLoaded()) await MoneroCore.load();
               _keyImageCache[cacheKey] = MoneroCore.generateKeyImage(
                 so.tx_pub_key,
                 walletKeys.privateViewKeyHex,
