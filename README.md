@@ -36,7 +36,7 @@ Cloudflare Pages (serverless)
 ├── functions/api/proxy.js — Smart RPC proxy (prefers own node when synced, falls back to public nodes)
 └── functions/_middleware.js — Cache-control headers
 
-VPS (Hetzner CAX21, self-hosted)
+Dedicated Server (Hetzner, self-hosted)
 ├── monerod              — Pruned Monero node (synced, RPC on localhost:18081)
 └── monero-lws           — Light-wallet server for balance scanning (REST on localhost:8443)
 ```
