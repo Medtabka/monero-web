@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monero Web — Open-Source XMR Wallet in your Browser</title>
-<meta name="description" content="A non-custodial Monero wallet that runs entirely in your browser. Supports BIP-39, MyMonero 13-word, Polyseed 16-word and standard 25-word seeds. Open source. No downloads. Your keys never leave your device.">
+<title>Monero Web — Free Open-Source Monero Web Wallet | MyMonero Alternative</title>
+<meta name="description" content="Free, open-source Monero web wallet — the browser alternative now that MyMonero's web wallet is gone. Non-custodial, client-side signing. Supports BIP-39, MyMonero 13-word, Polyseed and 25-word seeds. No downloads. Your keys never leave your device.">
 <meta name="keywords" content="monero wallet, xmr web wallet, monero browser wallet, mymonero alternative, polyseed, bip39 monero, non-custodial monero, open source xmr">
 <link rel="canonical" href="https://monero-web.com">
 <link rel="sitemap" type="application/xml" href="/sitemap.xml">
 
-<meta property="og:title" content="Monero Web — Open-Source XMR Wallet in your Browser">
+<meta property="og:title" content="Monero Web — Open-Source Monero Web Wallet in your Browser">
 <meta property="og:description" content="Access your Monero from any browser. Four seed formats. Non-custodial. Open source. Zero downloads.">
 <meta property="og:url" content="https://monero-web.com">
 <meta property="og:type" content="website">
@@ -26,10 +26,68 @@
   "@type": "WebApplication",
   "name": "Monero Web",
   "url": "https://monero-web.com",
+  "description": "Free, open-source Monero web wallet. Non-custodial with client-side signing. Supports BIP-39, MyMonero 13-word, Polyseed and 25-word standard seeds.",
   "applicationCategory": "FinanceApplication",
   "operatingSystem": "Any modern browser",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "isAccessibleForFree": true
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is this actually non-custodial?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Your seed and private keys never leave your browser tab. The wallet only talks to the network for read-only RPC calls (block height, fee estimate) — and those calls don't include any of your keys."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is this different from MyMonero?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "MyMonero was a light-wallet service that scanned the blockchain on your behalf using your view key. Monero Web runs the same architecture with a self-hosted light-wallet server (monero-lws). Your spend key never leaves your browser. The entire stack is open source and self-hostable."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I send XMR from this web wallet?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The wallet uses a light-wallet server (monero-lws) to scan the blockchain for your spendable outputs, then constructs and signs the transaction entirely in your browser using WebAssembly. Your spend key never leaves your browser tab."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why a web wallet? Aren't they less secure?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A web wallet you can read the source of is no less secure than a desktop app — both run code on hardware you control. We mitigate supply-chain risk with zero npm dependencies, no build pipeline, and strict CSP. You can also clone the repo and serve it locally."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which browsers are supported?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Anything modern with SubtleCrypto and BigInt — Chrome, Firefox, Safari, Brave, Edge, Tor Browser. No special permissions, no extensions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are you going to add a token, NFT, or premium tier?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. The wallet is MIT-licensed, free, and will stay that way. There is no token, no fee, no premium plan."
+      }
+    }
+  ]
 }
 </script>
 
@@ -217,8 +275,9 @@ footer{padding:48px 0 32px;border-top:1px solid var(--border);margin-top:64px;co
   <section class="hero">
     <div class="container">
       <div class="hero-badge"><span class="dot"></span> Live · Non-Custodial · 100% Open Source</div>
-      <h1>The Monero wallet that<br>lives in your <span class="accent">browser</span>.</h1>
+      <h1>The Monero web wallet that<br>lives in your <span class="accent">browser</span>.</h1>
       <p class="lead">Open your XMR from any device, on any network, with no installs. Every cryptographic operation runs locally in your browser — your seed phrase never crosses the wire.</p>
+      <p class="lead" style="font-size:.95rem;margin-top:-20px">MyMonero's web wallet is gone — it migrated to Cake Wallet, a mobile-only app. Monero Web is the open-source browser alternative.</p>
       <div class="hero-cta">
         <a href="/verify" class="btn btn-primary">
           <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
