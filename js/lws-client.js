@@ -143,8 +143,8 @@ const LwsClient = (function () {
     try {
       return await post('/login', body);
     } catch (e) {
-      if (isAccountNotFound(e)) {
-        console.log('[lws] account hidden/deactivated — re-registering');
+      if (isHiddenAccount(e)) {
+        await reactivateAccount(address);
         return await post('/login', body);
       }
       throw e;
@@ -172,32 +172,44 @@ const LwsClient = (function () {
   }
 
   /**
-   * Detect "account not found" errors from monero-lws. This happens when
-   * an account is idle for 30+ days and the LWS hides it.
+   * Detect "account hidden/deactivated" errors from monero-lws. This
+   * happens when an account is idle for 30+ days and the LWS hides it.
+   * The /login endpoint returns 403 with an empty body for hidden accounts.
    */
-  function isAccountNotFound (err) {
+  function isHiddenAccount (err) {
     if (!err) return false;
+    // 403 from /login with empty body = hidden account.
+    // 404 = account genuinely not found (also retriable).
+    if (err.statusCode === 403 || err.statusCode === 404) return true;
     var msg = (err.message || '').toLowerCase();
     return msg.indexOf('not found') !== -1 ||
            msg.indexOf('no account') !== -1 ||
-           msg.indexOf('account not') !== -1 ||
-           err.statusCode === 403 ||
-           err.statusCode === 404;
+           msg.indexOf('account not') !== -1;
   }
 
   /**
-   * Re-register a wallet that was hidden by monero-lws due to inactivity.
-   * Returns the login response so callers know the account is active again.
+   * Reactivate a hidden account via the admin API. monero-lws hides
+   * accounts idle for 30+ days, and /login returns 403 for them.
+   * The only way to bring them back is through the admin endpoint.
+   * Exposed at /lws/admin/reactivate via nginx on the VPS.
    */
-  async function reRegister (address, viewKey) {
-    console.log('[lws] re-registering hidden account');
-    return await post('/login', {
-      address,
-      view_key: viewKey,
-      create_account: true,
-      generated_locally: false,
-      start_height: 0,
-    });
+  async function reactivateAccount (address) {
+    console.log('[lws] reactivating hidden account via admin API');
+    var url = BASE_URL + '/admin/reactivate';
+    var response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: address }),
+      });
+    } catch (e) {
+      throw new LwsError('network', 'Could not reach reactivation endpoint: ' + e.message, e);
+    }
+    if (!response.ok) {
+      throw new LwsError('server', 'Reactivation failed (HTTP ' + response.status + ')', null, response.status);
+    }
+    return true;
   }
 
   /**
@@ -209,8 +221,9 @@ const LwsClient = (function () {
     try {
       return await post('/get_address_info', { address, view_key: viewKey });
     } catch (e) {
-      if (isAccountNotFound(e)) {
-        await reRegister(address, viewKey);
+      if (isHiddenAccount(e)) {
+        await reactivateAccount(address);
+        await post('/login', { address, view_key: viewKey, create_account: true, generated_locally: false });
         return await post('/get_address_info', { address, view_key: viewKey });
       }
       throw e;
@@ -218,14 +231,15 @@ const LwsClient = (function () {
   }
 
   /**
-   * Get the wallet's transaction history. Auto-re-registers hidden accounts.
+   * Get the wallet's transaction history. Auto-reactivates hidden accounts.
    */
   async function getAddressTxs (address, viewKey) {
     try {
       return await post('/get_address_txs', { address, view_key: viewKey });
     } catch (e) {
-      if (isAccountNotFound(e)) {
-        await reRegister(address, viewKey);
+      if (isHiddenAccount(e)) {
+        await reactivateAccount(address);
+        await post('/login', { address, view_key: viewKey, create_account: true, generated_locally: false });
         return await post('/get_address_txs', { address, view_key: viewKey });
       }
       throw e;
