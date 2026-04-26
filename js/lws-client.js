@@ -140,7 +140,15 @@ const LwsClient = (function () {
     } else if (!opts.generatedLocally) {
       body.start_height = 0;
     }
-    return post('/login', body);
+    try {
+      return await post('/login', body);
+    } catch (e) {
+      if (isAccountNotFound(e)) {
+        console.log('[lws] account hidden/deactivated — re-registering');
+        return await post('/login', body);
+      }
+      throw e;
+    }
   }
 
   /**
@@ -164,18 +172,64 @@ const LwsClient = (function () {
   }
 
   /**
-   * Get the wallet's current state (balance, scanning progress, etc.)
-   * Called every ~30s while the dashboard is open.
+   * Detect "account not found" errors from monero-lws. This happens when
+   * an account is idle for 30+ days and the LWS hides it.
    */
-  async function getAddressInfo (address, viewKey) {
-    return post('/get_address_info', { address, view_key: viewKey });
+  function isAccountNotFound (err) {
+    if (!err) return false;
+    var msg = (err.message || '').toLowerCase();
+    return msg.indexOf('not found') !== -1 ||
+           msg.indexOf('no account') !== -1 ||
+           msg.indexOf('account not') !== -1 ||
+           err.statusCode === 403 ||
+           err.statusCode === 404;
   }
 
   /**
-   * Get the wallet's transaction history.
+   * Re-register a wallet that was hidden by monero-lws due to inactivity.
+   * Returns the login response so callers know the account is active again.
+   */
+  async function reRegister (address, viewKey) {
+    console.log('[lws] re-registering hidden account');
+    return await post('/login', {
+      address,
+      view_key: viewKey,
+      create_account: true,
+      generated_locally: false,
+      start_height: 0,
+    });
+  }
+
+  /**
+   * Get the wallet's current state (balance, scanning progress, etc.)
+   * Called every ~30s while the dashboard is open. If the account was
+   * hidden (idle 30+ days), automatically re-registers it and retries.
+   */
+  async function getAddressInfo (address, viewKey) {
+    try {
+      return await post('/get_address_info', { address, view_key: viewKey });
+    } catch (e) {
+      if (isAccountNotFound(e)) {
+        await reRegister(address, viewKey);
+        return await post('/get_address_info', { address, view_key: viewKey });
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Get the wallet's transaction history. Auto-re-registers hidden accounts.
    */
   async function getAddressTxs (address, viewKey) {
-    return post('/get_address_txs', { address, view_key: viewKey });
+    try {
+      return await post('/get_address_txs', { address, view_key: viewKey });
+    } catch (e) {
+      if (isAccountNotFound(e)) {
+        await reRegister(address, viewKey);
+        return await post('/get_address_txs', { address, view_key: viewKey });
+      }
+      throw e;
+    }
   }
 
   /**

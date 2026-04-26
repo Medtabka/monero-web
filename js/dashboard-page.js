@@ -626,6 +626,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } catch (e) {
       console.warn('[lws] poll failed:', e);
+      // If the LWS client already handled re-registration internally,
+      // the retry inside getAddressInfo would have succeeded. If we still
+      // land here it's a genuine connectivity issue.
       noteEl.textContent = 'Light-wallet server temporarily unavailable';
     }
   }
