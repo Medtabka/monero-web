@@ -304,6 +304,10 @@ const LwsClient = (function () {
     const tip    = info.blockchain_height   || 0;
     if (tip <= start) return 1;
     if (cur >= tip)   return 1;
+    // Treat "within 3 blocks of chain tip" as fully synced — the chain
+    // advances while LWS finishes the last few blocks, which makes
+    // progress stick at ~99% until the next poll catches up.
+    if (tip - cur <= 3) return 1;
     return Math.max(0, Math.min(1, (cur - start) / (tip - start)));
   }
 
